@@ -1,11 +1,10 @@
-import { eq } from "drizzle-orm";
+import { eq, asc, desc } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
-import { InsertUser, users } from "../drizzle/schema";
+import { InsertUser, users, authors, works, comments } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
 let _db: ReturnType<typeof drizzle> | null = null;
 
-// Lazily create the drizzle instance so local tooling can run without a DB.
 export async function getDb() {
   if (!_db && process.env.DATABASE_URL) {
     try {
@@ -89,4 +88,61 @@ export async function getUserByOpenId(openId: string) {
   return result.length > 0 ? result[0] : undefined;
 }
 
-// TODO: add feature queries here as your schema grows.
+// ===== Authors =====
+
+export async function getAllAuthors() {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(authors).orderBy(asc(authors.sortOrder));
+}
+
+export async function getAuthorBySlug(slug: string) {
+  const db = await getDb();
+  if (!db) return undefined;
+  const result = await db.select().from(authors).where(eq(authors.slug, slug)).limit(1);
+  return result.length > 0 ? result[0] : undefined;
+}
+
+// ===== Works =====
+
+export async function getWorksByAuthorId(authorId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(works).where(eq(works.authorId, authorId)).orderBy(asc(works.sortOrder));
+}
+
+export async function getWorkBySlug(slug: string) {
+  const db = await getDb();
+  if (!db) return undefined;
+  const result = await db.select().from(works).where(eq(works.slug, slug)).limit(1);
+  return result.length > 0 ? result[0] : undefined;
+}
+
+export async function getWorkById(id: number) {
+  const db = await getDb();
+  if (!db) return undefined;
+  const result = await db.select().from(works).where(eq(works.id, id)).limit(1);
+  return result.length > 0 ? result[0] : undefined;
+}
+
+// ===== Comments =====
+
+export async function getCommentsByWorkId(workId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(comments).where(eq(comments.workId, workId)).orderBy(desc(comments.createdAt));
+}
+
+export async function createComment(workId: number, nickname: string, content: string) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.insert(comments).values({ workId, nickname, content });
+  return true;
+}
+
+export async function getCommentCountByWorkId(workId: number) {
+  const db = await getDb();
+  if (!db) return 0;
+  const result = await db.select().from(comments).where(eq(comments.workId, workId));
+  return result.length;
+}
