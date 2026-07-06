@@ -70,10 +70,58 @@
   background-color: oklch(0.55 0.22 25);
 }
 
+/* ===== Book Page Styles ===== */
+
+/* Book page container */
+.book-page {
+  min-height: 50vh;
+  position: relative;
+}
+
+@media (min-width: 640px) {
+  .book-page {
+    min-height: 60vh;
+  }
+}
+
+/* Book body text - small type, generous leading */
+.book-body-text {
+  font-size: 0.8rem;
+  line-height: 2.4;
+  letter-spacing: -0.005em;
+  word-break: keep-all;
+  color: rgba(0, 0, 0, 0.85);
+}
+
+@media (min-width: 640px) {
+  .book-body-text {
+    font-size: 0.85rem;
+    line-height: 2.5;
+  }
+}
+
+/* Individual line in book */
+.book-line {
+  min-height: 2.4em;
+}
+
+/* Stanza gap - slightly larger than one line */
+.stanza-gap {
+  height: 2em;
+}
+
+@media (min-width: 640px) {
+  .stanza-gap {
+    height: 2.4em;
+  }
+}
+
+/* ===== Legacy poem/essay styles (for compatibility) ===== */
+
 /* Poem content rendering */
 .poem-content {
-  font-size: 1rem;
-  line-height: 1.9;
+  font-size: 0.85rem;
+  line-height: 2.2;
   letter-spacing: -0.01em;
   white-space: pre-wrap;
   word-break: keep-all;
@@ -81,7 +129,7 @@
 
 .poem-content .stanza-break {
   display: block;
-  height: 1.5em;
+  height: 1.8em;
 }
 
 .poem-content .indent {
@@ -90,8 +138,8 @@
 
 /* Essay content */
 .essay-content {
-  font-size: 1rem;
-  line-height: 2;
+  font-size: 0.85rem;
+  line-height: 2.2;
   letter-spacing: -0.01em;
   word-break: keep-all;
   text-align: justify;

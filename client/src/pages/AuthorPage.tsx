@@ -82,6 +82,11 @@ export default function AuthorPage() {
                   <div>
                     <h3 className="text-base sm:text-lg font-medium text-black group-hover:text-[oklch(0.55_0.22_25)] transition-colors">
                       {work.title}
+                      {(work as any).commentCount > 0 && (
+                        <span className="ml-2 text-[10px] text-black/30 font-normal">
+                          ({(work as any).commentCount})
+                        </span>
+                      )}
                     </h3>
                     <span className="text-xs text-black/30 font-light mt-0.5 block">
                       {work.type === "essay" ? "산문" : "시"}

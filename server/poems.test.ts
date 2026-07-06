@@ -5,6 +5,7 @@ import type { TrpcContext } from "./_core/context";
 function createPublicContext(): TrpcContext {
   return {
     user: null,
+    isAdmin: false,
     req: {
       protocol: "https",
       headers: {},
@@ -48,7 +49,7 @@ describe("works", () => {
   it("gets work with author info", async () => {
     const ctx = createPublicContext();
     const caller = appRouter.createCaller(ctx);
-    const result = await caller.works.getWithAuthor({ slug: "kim-seungwook-1-spiritus" });
+    const result = await caller.works.getWithAuthor({ slug: "kim-seungwook-2-spiritus" });
     expect(result).not.toBeNull();
     expect(result?.work.title).toBe("Spiritus");
     expect(result?.author?.name).toBe("김승욱");
@@ -62,7 +63,7 @@ describe("comments", () => {
     const caller = appRouter.createCaller(ctx);
     
     // Get a work ID first
-    const work = await caller.works.getWithAuthor({ slug: "kim-seungwook-1-spiritus" });
+    const work = await caller.works.getWithAuthor({ slug: "kim-seungwook-2-spiritus" });
     expect(work).not.toBeNull();
     const workId = work!.work.id;
 

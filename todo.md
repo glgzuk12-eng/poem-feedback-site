@@ -17,3 +17,27 @@
 - [x] Navigation: Home → Author → Work Detail flow
 - [x] Google Fonts: Noto Sans KR for Korean typography
 - [x] Unit tests for backend API
+- [ ] WorkPage: PDF 원본 '책 페이지' 레이아웃 재현 ({{PAGE_BREAK}} → 새 페이지 박스)
+- [ ] WorkPage: ＜ 기호를 독립 행으로 본문과 동일한 검은 텍스트로 렌더링
+- [ ] WorkPage: 짝수/홀수 페이지 구분 (장식선 위치, 페이지 번호 위치)
+- [ ] WorkPage: 넓은 행간, 작은 활자, 넓은 여백의 인쇄물 스타일
+- [ ] Home: 관리자 모드 전환 버튼 추가 (작고 절제된 디자인)
+- [ ] index.css: 인쇄물 느낌 스타일 강화
+- [x] Admin auth: 비밀번호(0317) 기반 관리자 인증 API (환경변수 ADMIN_PASSWORD)
+- [x] Admin auth: httpOnly 쿠키 세션 발급 (새로고침 유지)
+- [x] Admin auth: 홈 헤더 우측에 작고 눈에 안 띄는 관리자 버튼
+- [x] Admin auth: 비밀번호 입력 모달
+- [x] Admin auth: 로그아웃 버튼 (관리자 상태일 때만 표시)
+- [x] Admin auth: 일반 방문자에게 관리자 기능 비노출
+- [x] Recent works: 홈에 최근 업로드 작품 6~10개 섹션 (작가명, 제목, 유형, 등록일)
+- [x] Comment count: 작가 페이지에서 각 작품 옆에 댓글 개수 표시
+- [x] Admin editor: 작가 선택, 제목, 유형 선택 폼
+- [x] Admin editor: 시 줄바꿈 보존, 들여쓰기 단계 조절 (Tab/Shift+Tab, +/- 버튼)
+- [x] Admin editor: 연 구분(스탠자 브레이크) 버튼
+- [x] Admin editor: 굵게/기울임/밑줄 서식 + 색상/자간 강조 기능
+- [x] Admin editor: 실시간 미리보기
+- [x] Admin editor: 기존 작품 수정/삭제 기능
+- [x] Admin editor: 작품 순서(sortOrder) 변경 기능
+- [x] Admin editor: 기존 작품 렌더링 방식과 호환 유지
+- [x] Fix: AdminEditor 미리보기 ＜ 독립 행 처리를 WorkPage와 동일하게 수정
+- [x] Fix: AdminEditor 미리보기 들여쓰기를 기존 작품(일반 공백)과 새 작품(전각 공백) 모두 호환

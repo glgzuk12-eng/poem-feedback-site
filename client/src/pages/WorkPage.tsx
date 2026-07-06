@@ -1,70 +1,125 @@
 import { trpc } from "@/lib/trpc";
 import { Link, useParams } from "wouter";
 import { ArrowLeft, Send } from "lucide-react";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 
 /**
- * Renders poem content preserving line breaks and indentation.
- * ＜ marks stanza/section breaks.
- * Leading spaces represent indentation.
+ * Splits content by {{PAGE_BREAK}} markers into separate page blocks.
+ * Each block represents one physical page from the PDF.
  */
-function PoemRenderer({ content, type }: { content: string; type: string }) {
-  if (type === "essay") {
-    // Essay: render as paragraphs
-    const paragraphs = content.split(/\n{2,}/);
-    return (
-      <div className="essay-content">
-        {paragraphs.map((para, i) => (
-          <p key={i} className="mb-4 text-black/80 leading-relaxed">
-            {para.split('\n').map((line, j) => (
-              <span key={j}>
-                {j > 0 && <br />}
-                {line}
-              </span>
-            ))}
-          </p>
-        ))}
-      </div>
-    );
-  }
+function splitIntoPages(content: string): string[] {
+  return content.split("{{PAGE_BREAK}}").map((p) => p.trim());
+}
 
-  // Poem: preserve exact line breaks and indentation
-  const lines = content.split('\n');
-  
+/**
+ * BookPage component - renders a single page in the PDF book style.
+ * Even pages: decorative lines on left, page number bottom-left.
+ * Odd pages: decorative lines on right, author name + page number bottom-right.
+ */
+function BookPage({
+  content,
+  pageNumber,
+  isEven,
+  authorName,
+  isFirstPage,
+  title,
+}: {
+  content: string;
+  pageNumber: number;
+  isEven: boolean;
+  authorName: string;
+  isFirstPage: boolean;
+  title?: string;
+}) {
+  const lines = content.split("\n");
+
   return (
-    <div className="poem-content text-black/85">
-      {lines.map((line, i) => {
-        // ＜ is a stanza/section break marker - display it visually
-        if (line.trim() === '＜') {
-          return (
-            <div key={i} className="my-4 sm:my-6 text-black/20 text-center select-none">
-              ＜
-            </div>
-          );
-        }
-        
-        // Empty line = stanza break
-        if (!line.trim()) {
-          return <div key={i} className="h-4 sm:h-5" />;
-        }
-        
-        // Calculate indentation from leading spaces
-        const leadingSpaces = line.match(/^(\s*)/)?.[1]?.length || 0;
-        const indentLevel = Math.floor(leadingSpaces / 2);
-        const trimmedLine = line.trimStart();
-        
-        return (
-          <div
-            key={i}
-            className="min-h-[1.8em]"
-            style={{ paddingLeft: `${indentLevel * 1}em` }}
-          >
-            {trimmedLine}
+    <div className="book-page relative bg-white border border-black/[0.06] shadow-[0_1px_3px_rgba(0,0,0,0.04)] mb-4 sm:mb-6">
+      {/* Decorative lines - left side for even pages */}
+      {isEven && (
+        <div className="absolute left-2 sm:left-3 top-0 bottom-0 flex flex-col justify-between py-8 sm:py-12 pointer-events-none">
+          <div className="w-4 sm:w-5 h-px bg-black/30" />
+          <div className="w-3 sm:w-4 h-px bg-black/30" />
+          <div className="w-4 sm:w-5 h-px bg-black/30" />
+        </div>
+      )}
+
+      {/* Decorative lines - right side for odd pages */}
+      {!isEven && (
+        <div className="absolute right-2 sm:right-3 top-0 bottom-0 flex flex-col justify-between py-12 sm:py-16 pointer-events-none">
+          <div className="w-4 sm:w-5 h-px bg-black/30 ml-auto" />
+          <div className="w-3 sm:w-4 h-px bg-black/30 ml-auto" />
+        </div>
+      )}
+
+      {/* Page content area */}
+      <div
+        className={`
+          px-8 sm:px-14 md:px-20 py-10 sm:py-14 md:py-18
+          ${isEven ? "pl-10 sm:pl-16 md:pl-24" : "pr-10 sm:pr-16 md:pr-24"}
+        `}
+      >
+        {/* Title on first page */}
+        {isFirstPage && title && (
+          <div className="mb-8 sm:mb-12">
+            <h2 className="text-base sm:text-lg font-bold text-black tracking-tight leading-tight">
+              {title}
+            </h2>
           </div>
-        );
-      })}
+        )}
+
+        {/* Body text */}
+        <div className="book-body-text">
+          {lines.map((line, i) => {
+            // ＜ or < as standalone line - render as independent line in same style
+            if (line.trim() === "\uFF1C" || line.trim() === "<") {
+              return (
+                <div key={i} className="book-line">
+                  {line.trim()}
+                </div>
+              );
+            }
+
+            // Empty line = stanza break
+            if (!line.trim()) {
+              return <div key={i} className="stanza-gap" />;
+            }
+
+            // Regular line - preserve leading spaces as indentation
+            const leadingSpaces = line.match(/^(\s*)/)?.[1]?.length || 0;
+            const indentEm = Math.floor(leadingSpaces / 2) * 1;
+
+            return (
+              <div
+                key={i}
+                className="book-line"
+                style={indentEm > 0 ? { paddingLeft: `${indentEm}em` } : undefined}
+              >
+                {line.trimStart()}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Footer: page number and author name */}
+      <div
+        className={`
+          absolute bottom-3 sm:bottom-4
+          ${isEven ? "left-8 sm:left-14 md:left-20" : "right-8 sm:right-14 md:right-20"}
+          text-[10px] sm:text-[11px] text-black/35 font-light tracking-wide
+        `}
+      >
+        {isEven ? (
+          <span>{pageNumber}</span>
+        ) : (
+          <span>
+            {authorName} {pageNumber}
+          </span>
+        )}
+      </div>
     </div>
   );
 }
@@ -101,20 +156,28 @@ export default function WorkPage() {
     });
   };
 
+  // Split content into pages
+  const pages = useMemo(() => {
+    if (!data?.work) return [];
+    return splitIntoPages(data.work.content);
+  }, [data?.work]);
+
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-white">
-        <header className="border-b border-black/10 py-6 px-4 sm:px-8">
-          <div className="max-w-3xl mx-auto">
-            <div className="h-5 bg-black/5 w-32 animate-pulse" />
+      <div className="min-h-screen bg-[#f5f4f0]">
+        <header className="py-5 px-4 sm:px-8">
+          <div className="max-w-2xl mx-auto">
+            <div className="h-4 bg-black/5 w-32 animate-pulse" />
           </div>
         </header>
-        <main className="max-w-3xl mx-auto px-4 sm:px-8 py-12">
-          <div className="h-10 bg-black/5 w-48 animate-pulse mb-4" />
-          <div className="space-y-3">
-            {Array.from({ length: 8 }).map((_, i) => (
-              <div key={i} className="h-4 bg-black/5 animate-pulse" style={{ width: `${60 + Math.random() * 30}%` }} />
-            ))}
+        <main className="max-w-2xl mx-auto px-4 sm:px-6 py-8">
+          <div className="bg-white border border-black/[0.06] p-10 sm:p-14 animate-pulse">
+            <div className="h-5 bg-black/5 w-40 mb-8" />
+            <div className="space-y-4">
+              {Array.from({ length: 10 }).map((_, i) => (
+                <div key={i} className="h-3 bg-black/5" style={{ width: `${50 + Math.random() * 40}%` }} />
+              ))}
+            </div>
           </div>
         </main>
       </div>
@@ -123,8 +186,8 @@ export default function WorkPage() {
 
   if (!data || !data.work) {
     return (
-      <div className="min-h-screen bg-white flex items-center justify-center">
-        <p className="text-black/40">작품을 찾을 수 없습니다.</p>
+      <div className="min-h-screen bg-[#f5f4f0] flex items-center justify-center">
+        <p className="text-black/40 text-sm">작품을 찾을 수 없습니다.</p>
       </div>
     );
   }
@@ -132,90 +195,78 @@ export default function WorkPage() {
   const { work, author } = data;
 
   return (
-    <div className="min-h-screen bg-white">
-      {/* Header */}
-      <header className="border-b border-black/10 py-6 px-4 sm:px-8">
-        <div className="max-w-3xl mx-auto flex items-center gap-4">
+    <div className="min-h-screen bg-[#f5f4f0]">
+      {/* Minimal header */}
+      <header className="py-4 sm:py-5 px-4 sm:px-8">
+        <div className="max-w-2xl mx-auto flex items-center gap-3">
           <Link
             href={author ? `/author/${author.slug}` : "/"}
             className="flex items-center gap-2 text-black/40 hover:text-black transition-colors"
           >
-            <ArrowLeft size={16} />
-            <span className="text-sm font-medium">{author?.name || "목록"}</span>
+            <ArrowLeft size={14} />
+            <span className="text-xs font-medium">{author?.name || "목록"}</span>
           </Link>
-          <div className="w-px h-4 bg-black/10" />
-          <div className="w-2 h-2 bg-[oklch(0.55_0.22_25)]" />
+          <div className="w-px h-3 bg-black/10" />
+          <span className="text-xs text-black/30 font-light">{work.type === "essay" ? "산문" : "시"}</span>
         </div>
       </header>
 
-      {/* Work Content */}
-      <main className="max-w-3xl mx-auto px-4 sm:px-8 py-12 sm:py-16">
-        {/* Title */}
-        <section className="mb-8 sm:mb-12">
-          <div className="flex items-start gap-3 sm:gap-4 mb-4">
-            <div className="w-4 h-4 sm:w-5 sm:h-5 bg-[oklch(0.55_0.22_25)] flex-shrink-0 mt-2" />
-            <div>
-              <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-black leading-tight">
-                {work.title}
-              </h1>
-              <p className="mt-1 text-sm text-black/40 font-light">
-                {author?.name} · {work.type === "essay" ? "산문" : "시"}
-              </p>
-            </div>
-          </div>
-          {/* Title-content separator — */}
-          <div className="mt-8 mb-2 text-black tracking-widest text-left">
-            <span className="text-lg">———</span>
-          </div>
-        </section>
-
-        {/* Content */}
-        <section className="mb-16 sm:mb-24 pl-0 sm:pl-2">
-          <PoemRenderer content={work.content} type={work.type} />
-        </section>
+      {/* Book pages */}
+      <main className="max-w-2xl mx-auto px-3 sm:px-6 pb-12 sm:pb-16">
+        {pages.map((pageContent, index) => (
+          <BookPage
+            key={index}
+            content={pageContent}
+            pageNumber={index + 1}
+            isEven={(index + 1) % 2 === 0}
+            authorName={author?.name || ""}
+            isFirstPage={index === 0}
+            title={index === 0 ? work.title : undefined}
+          />
+        ))}
 
         {/* Comments Section */}
-        <section className="border-t border-black pt-8 sm:pt-12">
-          <div className="flex items-center gap-3 mb-8">
-            <div className="w-3 h-3 bg-[oklch(0.55_0.22_25)]" />
-            <h2 className="text-lg sm:text-xl font-bold text-black">
+        <section className="mt-10 sm:mt-14 bg-white border border-black/[0.06] shadow-[0_1px_3px_rgba(0,0,0,0.04)] px-6 sm:px-10 py-8 sm:py-10">
+          <div className="flex items-center gap-2 mb-6">
+            <div className="w-2 h-2 bg-[oklch(0.55_0.22_25)]" />
+            <h2 className="text-sm font-bold text-black tracking-tight">
               피드백
             </h2>
-            <span className="text-sm text-black/30 font-light">
+            <span className="text-[10px] text-black/30 font-light ml-1">
               {comments?.length || 0}
             </span>
           </div>
 
           {/* Comment Form */}
-          <form onSubmit={handleSubmitComment} className="mb-10">
-            <div className="border border-black/10 p-4 sm:p-6">
-              <div className="mb-4">
+          <form onSubmit={handleSubmitComment} className="mb-8">
+            <div className="border border-black/8 p-4 sm:p-5">
+              <div className="mb-3">
                 <input
                   type="text"
                   placeholder="닉네임"
                   value={nickname}
                   onChange={(e) => setNickname(e.target.value)}
                   maxLength={50}
-                  className="w-full sm:w-48 px-3 py-2 text-sm border-b border-black/20 bg-transparent focus:outline-none focus:border-black placeholder:text-black/25 transition-colors"
+                  className="w-full sm:w-40 px-2 py-1.5 text-xs border-b border-black/15 bg-transparent focus:outline-none focus:border-black placeholder:text-black/25 transition-colors"
                 />
               </div>
-              <div className="mb-4">
+              <div className="mb-3">
                 <textarea
                   placeholder="작품에 대한 피드백을 남겨주세요..."
                   value={commentText}
                   onChange={(e) => setCommentText(e.target.value)}
                   maxLength={2000}
                   rows={3}
-                  className="w-full px-3 py-2 text-sm border border-black/10 bg-white focus:outline-none focus:border-black/30 placeholder:text-black/25 resize-none transition-colors"
+                  className="w-full px-2 py-1.5 text-xs border border-black/8 bg-white focus:outline-none focus:border-black/20 placeholder:text-black/25 resize-none transition-colors"
                 />
               </div>
               <div className="flex justify-end">
                 <Button
                   type="submit"
                   disabled={!nickname.trim() || !commentText.trim() || createComment.isPending}
-                  className="bg-black text-white hover:bg-black/80 text-sm px-5 py-2 h-auto rounded-none font-medium disabled:opacity-30"
+                  className="bg-black text-white hover:bg-black/80 text-[11px] px-4 py-1.5 h-auto rounded-none font-medium disabled:opacity-30"
                 >
-                  <Send size={14} className="mr-2" />
+                  <Send size={11} className="mr-1.5" />
                   등록
                 </Button>
               </div>
@@ -225,12 +276,12 @@ export default function WorkPage() {
           {/* Comments List */}
           <div className="space-y-0">
             {comments?.map((comment) => (
-              <div key={comment.id} className="py-4 border-b border-black/5">
-                <div className="flex items-center gap-2 mb-2">
-                  <span className="text-sm font-medium text-black">
+              <div key={comment.id} className="py-3 border-b border-black/5 last:border-b-0">
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="text-xs font-medium text-black">
                     {comment.nickname}
                   </span>
-                  <span className="text-[10px] text-black/25">
+                  <span className="text-[9px] text-black/25">
                     {new Date(comment.createdAt).toLocaleDateString("ko-KR", {
                       year: "numeric",
                       month: "short",
@@ -238,14 +289,14 @@ export default function WorkPage() {
                     })}
                   </span>
                 </div>
-                <p className="text-sm text-black/60 leading-relaxed whitespace-pre-wrap">
+                <p className="text-xs text-black/55 leading-relaxed whitespace-pre-wrap">
                   {comment.content}
                 </p>
               </div>
             ))}
             {comments?.length === 0 && (
-              <div className="py-12 text-center">
-                <p className="text-sm text-black/25 font-light">
+              <div className="py-8 text-center">
+                <p className="text-[11px] text-black/25 font-light">
                   아직 피드백이 없습니다. 첫 번째 피드백을 남겨주세요.
                 </p>
               </div>
@@ -255,11 +306,11 @@ export default function WorkPage() {
       </main>
 
       {/* Footer */}
-      <footer className="border-t border-black/10 py-8 px-4 sm:px-8">
-        <div className="max-w-3xl mx-auto flex items-center gap-3">
-          <div className="w-2 h-2 bg-[oklch(0.55_0.22_25)]" />
-          <span className="text-xs text-black/30 font-light">
-            꿈 포기 시 미리보기 — 피드백 사이트
+      <footer className="py-6 px-4 sm:px-8">
+        <div className="max-w-2xl mx-auto flex items-center gap-2">
+          <div className="w-1.5 h-1.5 bg-[oklch(0.55_0.22_25)]" />
+          <span className="text-[10px] text-black/25 font-light">
+            꿈 포기 시 미리보기
           </span>
         </div>
       </footer>

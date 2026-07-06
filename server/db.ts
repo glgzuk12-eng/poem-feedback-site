@@ -1,4 +1,4 @@
-import { eq, asc, desc } from "drizzle-orm";
+import { eq, asc, desc, inArray, sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
 import { InsertUser, users, authors, works, comments } from "../drizzle/schema";
 import { ENV } from './_core/env';
@@ -103,6 +103,17 @@ export async function getAuthorBySlug(slug: string) {
   return result.length > 0 ? result[0] : undefined;
 }
 
+export async function createAuthor(input: { name: string; slug: string; sortOrder?: number }) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.insert(authors).values({
+    name: input.name,
+    slug: input.slug,
+    sortOrder: input.sortOrder ?? 0,
+  });
+  return true;
+}
+
 // ===== Works =====
 
 export async function getWorksByAuthorId(authorId: number) {
@@ -125,6 +136,98 @@ export async function getWorkById(id: number) {
   return result.length > 0 ? result[0] : undefined;
 }
 
+export async function getRecentWorks(limit: number = 8) {
+  const db = await getDb();
+  if (!db) return [];
+  const recentWorks = await db
+    .select({
+      id: works.id,
+      title: works.title,
+      slug: works.slug,
+      type: works.type,
+      authorId: works.authorId,
+      sortOrder: works.sortOrder,
+      createdAt: works.createdAt,
+    })
+    .from(works)
+    .orderBy(desc(works.createdAt))
+    .limit(limit);
+
+  // Get author names for these works
+  if (recentWorks.length === 0) return [];
+  const authorIds = Array.from(new Set(recentWorks.map(w => w.authorId)));
+  const authorsArr = await db.select().from(authors).where(inArray(authors.id, authorIds));
+  const authorMap = new Map(authorsArr.map(a => [a.id, a.name]));
+
+  return recentWorks.map(w => ({
+    ...w,
+    authorName: authorMap.get(w.authorId) || "알 수 없음",
+  }));
+}
+
+export async function createWork(input: {
+  authorId: number;
+  title: string;
+  type: "poem" | "essay";
+  content: string;
+  sortOrder?: number;
+}) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  // Generate slug from title
+  const slug = input.title
+    .toLowerCase()
+    .replace(/[^a-z0-9가-힣\s-]/g, "")
+    .replace(/\s+/g, "-")
+    .slice(0, 100) + "-" + Date.now().toString(36);
+
+  await db.insert(works).values({
+    authorId: input.authorId,
+    title: input.title,
+    slug,
+    type: input.type,
+    content: input.content,
+    sortOrder: input.sortOrder ?? 0,
+  });
+
+  return { slug };
+}
+
+export async function updateWork(id: number, input: {
+  title?: string;
+  type?: "poem" | "essay";
+  content?: string;
+  sortOrder?: number;
+}) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  const updateData: Record<string, unknown> = {};
+  if (input.title !== undefined) updateData.title = input.title;
+  if (input.type !== undefined) updateData.type = input.type;
+  if (input.content !== undefined) updateData.content = input.content;
+  if (input.sortOrder !== undefined) updateData.sortOrder = input.sortOrder;
+
+  if (Object.keys(updateData).length === 0) return;
+
+  await db.update(works).set(updateData).where(eq(works.id, id));
+}
+
+export async function deleteWork(id: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  // Delete associated comments first
+  await db.delete(comments).where(eq(comments.workId, id));
+  await db.delete(works).where(eq(works.id, id));
+}
+
+export async function updateWorkSortOrder(workId: number, newSortOrder: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.update(works).set({ sortOrder: newSortOrder }).where(eq(works.id, workId));
+}
+
 // ===== Comments =====
 
 export async function getCommentsByWorkId(workId: number) {
@@ -145,4 +248,25 @@ export async function getCommentCountByWorkId(workId: number) {
   if (!db) return 0;
   const result = await db.select().from(comments).where(eq(comments.workId, workId));
   return result.length;
+}
+
+export async function getCommentCountsByWorkIds(workIds: number[]): Promise<Record<number, number>> {
+  const db = await getDb();
+  if (!db) return {};
+  if (workIds.length === 0) return {};
+
+  const result = await db
+    .select({
+      workId: comments.workId,
+      count: sql<number>`count(*)`.as("count"),
+    })
+    .from(comments)
+    .where(inArray(comments.workId, workIds))
+    .groupBy(comments.workId);
+
+  const counts: Record<number, number> = {};
+  for (const row of result) {
+    counts[row.workId] = Number(row.count);
+  }
+  return counts;
 }
