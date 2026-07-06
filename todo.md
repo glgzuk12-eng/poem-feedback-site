@@ -17,12 +17,12 @@
 - [x] Navigation: Home → Author → Work Detail flow
 - [x] Google Fonts: Noto Sans KR for Korean typography
 - [x] Unit tests for backend API
-- [ ] WorkPage: PDF 원본 '책 페이지' 레이아웃 재현 ({{PAGE_BREAK}} → 새 페이지 박스)
-- [ ] WorkPage: ＜ 기호를 독립 행으로 본문과 동일한 검은 텍스트로 렌더링
-- [ ] WorkPage: 짝수/홀수 페이지 구분 (장식선 위치, 페이지 번호 위치)
-- [ ] WorkPage: 넓은 행간, 작은 활자, 넓은 여백의 인쇄물 스타일
-- [ ] Home: 관리자 모드 전환 버튼 추가 (작고 절제된 디자인)
-- [ ] index.css: 인쇄물 느낌 스타일 강화
+- [x] WorkPage: PDF 원본 '책 페이지' 레이아웃 재현 ({{PAGE_BREAK}} → 새 페이지 박스)
+- [x] WorkPage: ＜ 기호를 독립 행으로 본문과 동일한 검은 텍스트로 렌더링
+- [x] WorkPage: 짝수/홀수 페이지 구분 (장식선 위치, 페이지 번호 위치)
+- [x] WorkPage: 넓은 행간, 작은 활자, 넓은 여백의 인쇄물 스타일
+- [x] Home: 관리자 모드 전환 버튼 추가 (작고 절제된 디자인)
+- [x] index.css: 인쇄물 느낌 스타일 강화
 - [x] Admin auth: 비밀번호(0317) 기반 관리자 인증 API (환경변수 ADMIN_PASSWORD)
 - [x] Admin auth: httpOnly 쿠키 세션 발급 (새로고침 유지)
 - [x] Admin auth: 홈 헤더 우측에 작고 눈에 안 띄는 관리자 버튼
