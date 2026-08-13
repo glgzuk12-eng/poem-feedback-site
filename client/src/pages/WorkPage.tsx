@@ -4,13 +4,15 @@ import { ArrowLeft, Send } from "lucide-react";
 import { useState, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import { formatPoemLines, getDisplayIndentStyle, type FormattedPoemLine } from "@/lib/poemFormatting";
+import { parseInlineFormatting } from "@/components/PoemInlineText";
 
 /**
  * Splits content by {{PAGE_BREAK}} markers into separate page blocks.
  * Each block represents one physical page from the PDF.
  */
 function splitIntoPages(content: string): string[] {
-  return content.split("{{PAGE_BREAK}}").map((p) => p.trim());
+  return content.split("{{PAGE_BREAK}}").map((page) => page.replace(/^\n+|\n+$/g, ""));
 }
 
 /**
@@ -25,6 +27,7 @@ function BookPage({
   authorName,
   isFirstPage,
   title,
+  type,
 }: {
   content: string;
   pageNumber: number;
@@ -32,8 +35,9 @@ function BookPage({
   authorName: string;
   isFirstPage: boolean;
   title?: string;
+  type: "poem" | "essay";
 }) {
-  const lines = content.split("\n");
+  const lines = type === "poem" ? formatPoemLines(content) : content.split("\n");
 
   return (
     <div className="book-page relative bg-white border border-black/[0.06] shadow-[0_1px_3px_rgba(0,0,0,0.04)] mb-4 sm:mb-6">
@@ -72,32 +76,36 @@ function BookPage({
 
         {/* Body text */}
         <div className="book-body-text">
-          {lines.map((line, i) => {
-            // ＜ or < as standalone line - render as independent line in same style
-            if (line.trim() === "\uFF1C" || line.trim() === "<") {
+          {lines.map((entry, i) => {
+            if (type === "poem") {
+              const line = entry as FormattedPoemLine;
+              if (line.kind === "gap") return <div key={i} className="stanza-gap" />;
               return (
-                <div key={i} className="book-line">
-                  {line.trim()}
+                <div
+                  key={i}
+                  className="book-line"
+                  style={line.kind === "line" ? getDisplayIndentStyle(line) : undefined}
+                >
+                  {parseInlineFormatting(line.text)}
                 </div>
               );
             }
 
-            // Empty line = stanza break
-            if (!line.trim()) {
-              return <div key={i} className="stanza-gap" />;
+            const line = entry as string;
+            if (line.trim() === "\uFF1C" || line.trim() === "<") {
+              return <div key={i} className="book-line">{line.trim()}</div>;
             }
+            if (!line.trim()) return <div key={i} className="stanza-gap" />;
 
-            // Regular line - preserve leading spaces as indentation
             const leadingSpaces = line.match(/^(\s*)/)?.[1]?.length || 0;
-            const indentEm = Math.floor(leadingSpaces / 2) * 1;
-
+            const indentEm = Math.floor(leadingSpaces / 2);
             return (
               <div
                 key={i}
                 className="book-line"
                 style={indentEm > 0 ? { paddingLeft: `${indentEm}em` } : undefined}
               >
-                {line.trimStart()}
+                {parseInlineFormatting(line.trimStart())}
               </div>
             );
           })}
@@ -222,6 +230,7 @@ export default function WorkPage() {
             authorName={author?.name || ""}
             isFirstPage={index === 0}
             title={index === 0 ? work.title : undefined}
+            type={work.type as "poem" | "essay"}
           />
         ))}
 

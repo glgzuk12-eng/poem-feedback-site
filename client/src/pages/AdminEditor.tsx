@@ -1,10 +1,12 @@
-import { useState, useCallback, useMemo } from "react";
+import { useState, useMemo, type KeyboardEvent as ReactKeyboardEvent } from "react";
 import { Link, useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { useAdmin } from "@/hooks/useAdmin";
 import { ArrowLeft, Plus, Trash2, Edit3, GripVertical, Bold, Italic, Underline, IndentIncrease, IndentDecrease, Minus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import { formatPoemLines, getDisplayIndentStyle, indentSelectedLines, type FormattedPoemLine } from "@/lib/poemFormatting";
+import { parseInlineFormatting } from "@/components/PoemInlineText";
 
 // ===== Rich content format =====
 // Content is stored as plain text with conventions:
@@ -67,40 +69,40 @@ function EditorToolbar({
 function ContentPreview({ content, type }: { content: string; type: "poem" | "essay" }) {
   const rendered = useMemo(() => {
     if (!content) return null;
-    const lines = content.split("\n");
+    const lines = type === "poem" ? formatPoemLines(content) : content.split("\n");
 
-    return lines.map((line, i) => {
-      // ＜ or < as standalone line - render as independent line (same as WorkPage)
-      if (line.trim() === "＜" || line.trim() === "<") {
+    return lines.map((entry, i) => {
+      if (type === "poem") {
+        const line = entry as FormattedPoemLine;
+        if (line.kind === "gap") return <div key={i} className="stanza-gap" />;
         return (
-          <div key={i} className="book-line">
-            {line.trim()}
+          <div
+            key={i}
+            className="book-line"
+            style={line.kind === "line" ? getDisplayIndentStyle(line) : undefined}
+          >
+            {parseInlineFormatting(line.text)}
           </div>
         );
       }
 
-      // Empty line = stanza break (visual gap)
-      if (!line.trim()) {
-        return <div key={i} className="stanza-gap" />;
+      const line = entry as string;
+      if (line.trim() === "＜" || line.trim() === "<") {
+        return <div key={i} className="book-line">{line.trim()}</div>;
       }
+      if (!line.trim()) return <div key={i} className="stanza-gap" />;
 
-      // Count indent level: full-width spaces (editor format) or regular spaces (legacy format)
       let indent = 0;
       let text = line;
-      // Full-width space indent (editor format)
       while (text.startsWith("　")) {
         indent++;
         text = text.slice(1);
       }
-      // Regular space indent (legacy format from existing works)
       if (indent === 0) {
         const leadingSpaces = text.match(/^(\s*)/)?.[1]?.length || 0;
         indent = Math.floor(leadingSpaces / 2);
         if (indent > 0) text = text.trimStart();
       }
-
-      // Parse inline formatting
-      const formatted = parseInlineFormatting(text);
 
       return (
         <div
@@ -108,7 +110,7 @@ function ContentPreview({ content, type }: { content: string; type: "poem" | "es
           className="book-line"
           style={indent > 0 ? { paddingLeft: `${indent}em` } : undefined}
         >
-          {formatted}
+          {parseInlineFormatting(text)}
         </div>
       );
     });
@@ -119,68 +121,6 @@ function ContentPreview({ content, type }: { content: string; type: "poem" | "es
       {rendered}
     </div>
   );
-}
-
-function parseInlineFormatting(text: string): React.ReactNode[] {
-  const nodes: React.ReactNode[] = [];
-  let remaining = text;
-  let key = 0;
-
-  while (remaining.length > 0) {
-    // Bold: **text**
-    const boldMatch = remaining.match(/^\*\*(.+?)\*\*/);
-    if (boldMatch) {
-      nodes.push(<strong key={key++}>{boldMatch[1]}</strong>);
-      remaining = remaining.slice(boldMatch[0].length);
-      continue;
-    }
-
-    // Italic: *text*
-    const italicMatch = remaining.match(/^\*(.+?)\*/);
-    if (italicMatch) {
-      nodes.push(<em key={key++}>{italicMatch[1]}</em>);
-      remaining = remaining.slice(italicMatch[0].length);
-      continue;
-    }
-
-    // Underline: __text__
-    const underlineMatch = remaining.match(/^__(.+?)__/);
-    if (underlineMatch) {
-      nodes.push(<u key={key++}>{underlineMatch[1]}</u>);
-      remaining = remaining.slice(underlineMatch[0].length);
-      continue;
-    }
-
-    // Color: {{color:text}}
-    const colorMatch = remaining.match(/^\{\{color:(.+?)\}\}/);
-    if (colorMatch) {
-      nodes.push(
-        <span key={key++} className="text-[oklch(0.55_0.22_25)]">
-          {colorMatch[1]}
-        </span>
-      );
-      remaining = remaining.slice(colorMatch[0].length);
-      continue;
-    }
-
-    // Letter spacing: {{ls:value:text}}
-    const lsMatch = remaining.match(/^\{\{ls:([^:]+):(.+?)\}\}/);
-    if (lsMatch) {
-      nodes.push(
-        <span key={key++} style={{ letterSpacing: lsMatch[1] }}>
-          {lsMatch[2]}
-        </span>
-      );
-      remaining = remaining.slice(lsMatch[0].length);
-      continue;
-    }
-
-    // Plain character
-    nodes.push(remaining[0]);
-    remaining = remaining.slice(1);
-  }
-
-  return nodes;
 }
 
 // ===== Main Editor Component =====
@@ -285,45 +225,20 @@ export default function AdminEditor() {
   };
 
   // Textarea helpers
-  const textareaRef = useCallback((node: HTMLTextAreaElement | null) => {
-    if (node) {
-      node.addEventListener("keydown", handleKeyDown);
-      return () => node.removeEventListener("keydown", handleKeyDown);
-    }
-  }, []);
-
-  const handleKeyDown = (e: KeyboardEvent) => {
+  const handleKeyDown = (e: ReactKeyboardEvent<HTMLTextAreaElement>) => {
     const textarea = e.target as HTMLTextAreaElement;
-    if (e.key === "Tab") {
-      e.preventDefault();
-      const start = textarea.selectionStart;
-      const end = textarea.selectionEnd;
-      const lines = textarea.value.split("\n");
+    if (e.key !== "Tab") return;
 
-      // Find current line
-      let charCount = 0;
-      let lineIndex = 0;
-      for (let i = 0; i < lines.length; i++) {
-        if (charCount + lines[i].length >= start) {
-          lineIndex = i;
-          break;
-        }
-        charCount += lines[i].length + 1;
-      }
+    e.preventDefault();
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const newValue = indentSelectedLines(content, start, end, e.shiftKey ? "out" : "in");
+    setContent(newValue);
 
-      if (e.shiftKey) {
-        // Remove indent
-        if (lines[lineIndex].startsWith("　")) {
-          lines[lineIndex] = lines[lineIndex].slice(1);
-        }
-      } else {
-        // Add indent
-        lines[lineIndex] = "　" + lines[lineIndex];
-      }
-
-      const newValue = lines.join("\n");
-      setContent(newValue);
-    }
+    requestAnimationFrame(() => {
+      textarea.focus();
+      textarea.setSelectionRange(start, Math.min(newValue.length, end + (e.shiftKey ? -1 : 1)));
+    });
   };
 
   const insertAtCursor = (before: string, after: string) => {
@@ -353,43 +268,23 @@ export default function AdminEditor() {
     setContent(newContent);
   };
 
-  const addIndent = () => {
+  const changeIndent = (direction: "in" | "out") => {
     const textarea = document.querySelector<HTMLTextAreaElement>("#editor-textarea");
     if (!textarea) return;
+
     const start = textarea.selectionStart;
-    const lines = content.split("\n");
-    let charCount = 0;
-    let lineIndex = 0;
-    for (let i = 0; i < lines.length; i++) {
-      if (charCount + lines[i].length >= start) {
-        lineIndex = i;
-        break;
-      }
-      charCount += lines[i].length + 1;
-    }
-    lines[lineIndex] = "　" + lines[lineIndex];
-    setContent(lines.join("\n"));
+    const end = textarea.selectionEnd;
+    const newValue = indentSelectedLines(content, start, end, direction);
+    setContent(newValue);
+
+    requestAnimationFrame(() => {
+      textarea.focus();
+      textarea.setSelectionRange(start, Math.min(newValue.length, end + (direction === "in" ? 1 : -1)));
+    });
   };
 
-  const removeIndent = () => {
-    const textarea = document.querySelector<HTMLTextAreaElement>("#editor-textarea");
-    if (!textarea) return;
-    const start = textarea.selectionStart;
-    const lines = content.split("\n");
-    let charCount = 0;
-    let lineIndex = 0;
-    for (let i = 0; i < lines.length; i++) {
-      if (charCount + lines[i].length >= start) {
-        lineIndex = i;
-        break;
-      }
-      charCount += lines[i].length + 1;
-    }
-    if (lines[lineIndex].startsWith("　")) {
-      lines[lineIndex] = lines[lineIndex].slice(1);
-      setContent(lines.join("\n"));
-    }
-  };
+  const addIndent = () => changeIndent("in");
+  const removeIndent = () => changeIndent("out");
 
   if (!isAdmin) {
     return (
@@ -483,11 +378,11 @@ export default function AdminEditor() {
                 />
                 <textarea
                   id="editor-textarea"
-                  ref={textareaRef}
                   value={content}
+                  onKeyDown={handleKeyDown}
                   onChange={(e) => setContent(e.target.value)}
                   placeholder={type === "poem"
-                    ? "시를 입력하세요...\n\n줄바꿈 = 행 구분\n＜ = 연 구분\n　(전각 공백) = 들여쓰기"
+                    ? "시를 입력하세요...\n\n줄바꿈 = 행 구분\n＜ = 연 구분\n　(전각 공백) = 명시적 들여쓰기\n두 줄 이상 연의 첫 행은 미리보기에서 자동 들여쓰기"
                     : "산문을 입력하세요..."
                   }
                   className="w-full h-64 sm:h-80 p-4 text-xs leading-relaxed font-mono resize-none focus:outline-none bg-white"

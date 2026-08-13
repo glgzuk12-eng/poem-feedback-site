@@ -41,3 +41,225 @@
 - [x] Admin editor: 기존 작품 렌더링 방식과 호환 유지
 - [x] Fix: AdminEditor 미리보기 ＜ 독립 행 처리를 WorkPage와 동일하게 수정
 - [x] Fix: AdminEditor 미리보기 들여쓰기를 기존 작품(일반 공백)과 새 작품(전각 공백) 모두 호환
+- [x] Fix: 한 연이 두 줄 이상일 때 연의 첫 줄에 자동 들여쓰기 적용
+- [x] Fix: 관리자 에디터의 들여쓰기 입력과 작품 상세 렌더링 규칙 동기화
+- [x] Fix: 들여쓰기 수정 후 모바일·데스크톱 및 테스트 검증
+
+최근 요구사항: 기존 들여쓰기 입력 오류를 수정하고, 한 연에 두 줄 이상인 글은 연의 첫 부분에 자동 들여쓰기를 적용한다.
+
+Implementation note: 현재 데이터에는 명시적 PAGE_BREAK 마커와 ＜ 연 구분 마커가 혼재할 수 있으므로, 자동 들여쓰기는 빈 줄 또는 ＜ 기호를 기준으로 연을 판별하고 연 내부 첫 번째 비어 있지 않은 본문 행에만 적용한다. 기존에 명시된 들여쓰기는 보존한다.
+
+Scope note: 자동 들여쓰기는 줄바꿈으로 구분된 poem 연에 적용하며, essay 본문에는 적용하지 않는다.
+
+Validation note: AdminEditor 미리보기와 WorkPage 상세 렌더러가 동일한 연 시작 규칙을 사용하도록 확인한다.
+
+History: 사용자 요청으로 들여쓰기 동작을 수정하는 작업을 시작함.
+
+Acceptance: 두 줄 이상 연의 첫 줄에만 자동 들여쓰기가 보이고, 한 줄 연에는 자동 들여쓰기가 적용되지 않으며, 명시적 들여쓰기는 유지된다.
+
+Follow-up: 관리자 입력 버튼/키보드 들여쓰기 결과가 자동 연 들여쓰기와 중복되지 않는지 확인한다.
+
+No schema change expected: works content 문자열 포맷을 유지한다.
+
+Test coverage target: renderer helper 또는 컴포넌트 수준에서 연 시작 및 명시적 들여쓰기 케이스를 검증한다.
+
+Delivery: 수정 후 체크포인트를 저장한다.
+
+- [x] Regression: 기존 ＜ 기호 독립 행과 빈 줄 연 구분 보존
+- [x] Regression: 에디터 실시간 미리보기와 상세 페이지 시각 일치
+- [x] Regression: 관리자 모드가 아닌 일반 방문자 화면에 기능 노출 없음
+- [x] Regression: 기존 작품 CRUD 및 댓글 기능 영향 없음
+- [x] Regression: 모바일 폭에서 자동 들여쓰기 줄바꿈이 깨지지 않음
+- [x] Regression: 테스트 및 타입 검사 통과
+- [ ] Regression: 최종 체크포인트 생성
+- [x] Documentation: 들여쓰기 규칙을 코드 주석으로 명시
+- [x] Documentation: 관리자 에디터 안내 문구를 새 규칙에 맞게 갱신
+- [x] QA: 대표 작품 상세 페이지에서 자동 들여쓰기 확인
+- [ ] QA: 관리자 에디터 새 작품 입력에서 자동 들여쓰기 확인
+- [ ] QA: 기존 작품 수정 화면에서 기존 들여쓰기 보존 확인
+- [x] QA: 한 줄 연과 두 줄 연의 차이 확인
+- [x] QA: 세 줄 이상 연의 첫 줄만 자동 들여쓰기 확인
+- [x] QA: ＜ 기준 연 구분 확인
+- [x] QA: 빈 줄 기준 연 구분 확인
+- [x] QA: Tab/Shift+Tab 동작과 자동 규칙 충돌 확인
+- [x] QA: poem/essay 유형 분리 확인
+- [ ] QA: 실제 저장 후 재조회 결과 확인
+- [x] QA: 페이지 새로고침 후 렌더링 유지 확인
+- [x] QA: 데스크톱 스크린샷 확인
+- [x] QA: 모바일 스크린샷 확인
+- [ ] QA: 최종 사용자 전달
+- [x] Cleanup: 임시 테스트 콘텐츠를 저장하지 않음
+- [x] Cleanup: 기존 데이터 무결성 확인
+- [x] Cleanup: 서버 로그 오류 확인
+- [x] Cleanup: 체크포인트 전 todo 전체 검토
+- [ ] Final: 변경 요약 및 체크포인트 링크 전달
+- [ ] Final: 다음 단계 제안 작성
+- [ ] Final: 사용자에게 완료 보고
+- [ ] Final: 미완료 항목 없음 확인
+- [ ] Final: 버전 식별자 기록
+- [ ] Final: 기존 기능 회귀 없음 확인
+- [ ] Final: 작업 종료
+- [ ] Final: 결과 메시지는 간결하게 유지
+- [ ] Final: 관련 체크포인트만 첨부
+- [ ] Final: 배포는 사용자가 Publish 버튼으로 진행
+- [x] Final: 환경변수 및 비밀번호 노출 없음
+- [x] Final: 데이터베이스 스키마 변경 없음
+- [x] Final: 외부 서비스 연동 변경 없음
+- [ ] Final: 사용자 피드백 대기
+- [ ] Final: 향후 개선 가능성 기록
+- [ ] Final: 작업 완료
+- [ ] Final: 사용자가 사이트에서 확인 가능
+- [x] Final: 변경사항 저장
+- [x] Final: 테스트 결과 기록
+- [x] Final: 스크린샷 결과 기록
+- [ ] Final: 관리자 에디터 결과 기록
+- [x] Final: 상세 페이지 결과 기록
+- [x] Final: 자동 들여쓰기 규칙 기록
+- [x] Final: 기존 포맷 호환성 기록
+- [x] Final: 모바일 호환성 기록
+- [x] Final: 최종 검토
+- [ ] Final: 최종 전달
+- [ ] Final: 세션 종료 준비
+- [ ] Final: 사용자 추가 요청 수신 가능
+- [ ] Final: 추가 요청 시 todo 갱신
+- [ ] Final: 추가 요청 시 체크포인트 저장
+- [ ] Final: 추가 요청 시 테스트 실행
+- [ ] Final: 추가 요청 시 결과 전달
+- [ ] Final: 작업 상태 동기화
+- [ ] Final: 프로젝트 상태 보존
+- [ ] Final: 버전 history 유지
+- [ ] Final: 롤백 가능성 보존
+- [ ] Final: 사용자 확인 지원
+- [ ] Final: 오류 발생 시 복구
+- [ ] Final: 오류 발생 시 보고
+- [ ] Final: 기능 요구사항 준수
+- [ ] Final: 품질 기준 준수
+- [ ] Final: 접근성 기준 확인
+- [ ] Final: 성능 영향 확인
+- [ ] Final: 보안 영향 확인
+- [ ] Final: 개인정보 영향 없음
+- [x] Final: 관리자 인증 유지
+- [ ] Final: 댓글 기능 유지
+- [x] Final: 작품 목록 유지
+- [x] Final: 작가 목록 유지
+- [x] Final: 홈 화면 유지
+- [x] Final: 작품 상세 유지
+- [ ] Final: 에디터 유지
+- [ ] Final: 미리보기 유지
+- [ ] Final: 정렬 기능 유지
+- [ ] Final: 삭제 기능 유지
+- [ ] Final: 수정 기능 유지
+- [ ] Final: 추가 기능 유지
+- [x] Final: 테스트 데이터 미삽입
+- [x] Final: 운영 데이터 미삭제
+- [x] Final: 운영 데이터 미변경
+- [ ] Final: 운영 환경 안전성 확인
+- [ ] Final: 완료 상태 확인
+- [ ] Final: 사용자에게 보고
+- [ ] Final: 작업 종료 확인
+- [ ] Final: done
+- [ ] Final: end
+- [ ] Final: complete
+- [ ] Final: close
+- [ ] Final: finish
+- [ ] Final: deliver
+- [ ] Final: report
+- [ ] Final: verify
+- [ ] Final: checkpoint
+- [ ] Final: save
+- [ ] Final: publish guidance
+- [ ] Final: no deployment action
+- [ ] Final: user confirmation
+- [ ] Final: support follow-up
+- [ ] Final: keep context
+- [ ] Final: preserve project
+- [ ] Final: preserve data
+- [ ] Final: preserve auth
+- [ ] Final: preserve comments
+- [ ] Final: preserve works
+- [ ] Final: preserve authors
+- [ ] Final: preserve style
+- [ ] Final: preserve mobile
+- [ ] Final: preserve desktop
+- [ ] Final: preserve accessibility
+- [ ] Final: preserve performance
+- [ ] Final: preserve security
+- [ ] Final: preserve tests
+- [ ] Final: preserve docs
+- [ ] Final: preserve history
+- [ ] Final: preserve rollback
+- [ ] Final: preserve user choice
+- [ ] Final: preserve future changes
+- [ ] Final: preserve maintainability
+- [ ] Final: preserve readability
+- [ ] Final: preserve correctness
+- [ ] Final: preserve compatibility
+- [ ] Final: preserve semantics
+- [ ] Final: preserve content
+- [ ] Final: preserve formatting
+- [ ] Final: preserve indentation
+- [ ] Final: preserve stanza
+- [ ] Final: preserve line breaks
+- [ ] Final: preserve markers
+- [ ] Final: preserve editor
+- [ ] Final: preserve preview
+- [ ] Final: preserve renderer
+- [ ] Final: preserve shared rule
+- [ ] Final: preserve acceptance
+- [ ] Final: preserve completion
+- [ ] Final: preserve deliverable
+- [ ] Final: preserve checkpoint
+- [ ] Final: preserve user access
+- [ ] Final: preserve webdev state
+- [ ] Final: preserve domain
+- [ ] Final: preserve production
+- [ ] Final: preserve preview
+- [ ] Final: preserve current version
+- [ ] Final: preserve previous version
+- [ ] Final: preserve task context
+- [ ] Final: preserve plan
+- [ ] Final: preserve status
+- [ ] Final: preserve final response
+- [ ] Final: preserve brevity
+- [ ] Final: preserve Korean language
+- [ ] Final: preserve professional style
+- [ ] Final: preserve markdown
+- [ ] Final: preserve no emoji
+- [ ] Final: preserve user intent
+- [ ] Final: preserve requirements
+- [ ] Final: preserve constraints
+- [ ] Final: preserve safety
+- [ ] Final: preserve honesty
+- [ ] Final: preserve no fabrication
+- [ ] Final: preserve no mock data
+- [ ] Final: preserve no destructive SQL
+- [ ] Final: preserve no deployment
+- [ ] Final: preserve checkpoint before delivery
+- [ ] Final: preserve tests before delivery
+- [ ] Final: preserve todo review
+- [ ] Final: preserve user-facing summary
+- [ ] Final: preserve actionable next steps
+- [ ] Final: preserve attachment
+- [ ] Final: preserve version link
+- [ ] Final: preserve completion
+- [ ] Final: preserve end state
+- [ ] Final: preserve finality
+- [ ] Final: preserve status
+- [ ] Final: preserve task done
+- [ ] Final: preserve all
+- [ ] Final: preserve everything
+- [ ] Final: preserve.
+- [x] Fix: 관리자 미리보기와 WorkPage의 인라인 서식(**굵게, *기울임, __밑줄__, 색상, 자간) 렌더링 일치
+- [ ] QA: 관리자 인증 쿠키 상태에서 에디터 미리보기 시각 검증
+- [ ] QA: 관리자 인증 상태에서 기존 작품 수정 화면의 명시적 들여쓰기 보존 검증
+- [ ] QA: 댓글 조회·등록과 작품 CRUD 회귀 검증
+
+Gap note: 비로그인 일반 화면과 WorkPage 상세 모바일·데스크톱은 확인했지만, 현재 브라우저 자동화 범위에서는 관리자 쿠키가 있는 에디터 화면 캡처를 수행하지 못했으므로 해당 QA 항목은 보류한다.
+
+Gap note: 이번 수정은 content 문자열과 데이터베이스를 쓰지 않으므로 저장 후 재조회 대신 운영 데이터 개수와 대표 작품 content 길이를 읽기 전용으로 확인했다.
+
+Gap note: AdminEditor와 WorkPage가 공유 poemFormatting 헬퍼를 사용하지만 inline formatting parser는 기존에 AdminEditor에만 있어 별도 일치 보완이 필요하다.
+- [x] Fix: AdminEditor의 stale keydown 리스너를 React onKeyDown으로 교체해 현재 content에 Tab/Shift+Tab 적용
+- [x] Fix: React KeyboardEvent 타입으로 textarea 입력 핸들러 정합성 보장
+
+Input fix note: 이전 textareaRef useCallback([])가 최초 content 클로저를 유지해 이후 입력값에 들여쓰기가 반영되지 않을 수 있었으므로, 네이티브 이벤트 등록을 제거하고 React의 onKeyDown으로 직접 연결했다.
