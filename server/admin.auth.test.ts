@@ -91,3 +91,25 @@ describe("admin.logout", () => {
     expect(clearedCookies[0]?.name).toBe(ADMIN_COOKIE_NAME);
   });
 });
+
+describe("admin work management access", () => {
+  it("allows an authenticated admin to read the work management list", async () => {
+    const { ctx } = createPublicContext();
+    ctx.isAdmin = true;
+    const caller = appRouter.createCaller(ctx);
+    const works = await caller.admin.listAllWorks();
+
+    expect(works).toBeInstanceOf(Array);
+    expect(works.length).toBeGreaterThan(0);
+    expect(works[0]).toEqual(expect.objectContaining({ title: expect.any(String), authorName: expect.any(String) }));
+  });
+
+  it("keeps work mutations protected for public visitors", async () => {
+    const { ctx } = createPublicContext();
+    const caller = appRouter.createCaller(ctx);
+
+    await expect(caller.admin.updateWork({ id: 1, title: "권한 없음" })).rejects.toThrow();
+    await expect(caller.admin.deleteWork({ id: 1 })).rejects.toThrow();
+    await expect(caller.admin.updateSortOrder({ workId: 1, newSortOrder: 1 })).rejects.toThrow();
+  });
+});

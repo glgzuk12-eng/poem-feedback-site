@@ -8,6 +8,7 @@ import Home from "./pages/Home";
 import AuthorPage from "./pages/AuthorPage";
 import WorkPage from "./pages/WorkPage";
 import AdminEditor from "./pages/AdminEditor";
+import RecentWorksPage from "./pages/RecentWorksPage";
 
 function Router() {
   return (
@@ -15,6 +16,7 @@ function Router() {
       <Route path="/" component={Home} />
       <Route path="/author/:slug" component={AuthorPage} />
       <Route path="/work/:slug" component={WorkPage} />
+      <Route path="/works/recent" component={RecentWorksPage} />
       <Route path="/admin/editor" component={AdminEditor} />
       <Route path="/404" component={NotFound} />
       <Route component={NotFound} />

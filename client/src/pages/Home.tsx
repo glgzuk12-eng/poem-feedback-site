@@ -70,9 +70,14 @@ export default function Home() {
         {/* Recent Works Section */}
         {!recentLoading && recentWorks && recentWorks.length > 0 && (
           <section className="mb-12">
-            <div className="flex items-center gap-2 mb-4">
-              <div className="w-1.5 h-1.5 bg-[oklch(0.55_0.22_25)]" />
-              <h2 className="text-sm font-bold text-black">최근 업로드된 작품</h2>
+            <div className="flex items-center justify-between gap-2 mb-4">
+              <div className="flex items-center gap-2">
+                <div className="w-1.5 h-1.5 bg-[oklch(0.55_0.22_25)]" />
+                <h2 className="text-sm font-bold text-black">최근 업로드된 작품</h2>
+              </div>
+              <Link href="/works/recent" className="text-[10px] text-black/35 hover:text-black underline underline-offset-4 transition-colors">
+                전체 목록 보기
+              </Link>
             </div>
             <div className="border-t border-black/8">
               {recentWorks.map((work) => (

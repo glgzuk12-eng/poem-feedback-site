@@ -165,6 +165,37 @@ export async function getRecentWorks(limit: number = 8) {
   }));
 }
 
+export async function getRecentWorksArchive() {
+  const db = await getDb();
+  if (!db) return [];
+
+  const rows = await db
+    .select({
+      id: works.id,
+      title: works.title,
+      slug: works.slug,
+      type: works.type,
+      authorId: works.authorId,
+      sortOrder: works.sortOrder,
+      createdAt: works.createdAt,
+    })
+    .from(works)
+    .orderBy(desc(works.createdAt));
+
+  if (rows.length === 0) return [];
+
+  const authorIds = Array.from(new Set(rows.map((work) => work.authorId)));
+  const authorsArr = await db.select().from(authors).where(inArray(authors.id, authorIds));
+  const authorMap = new Map(authorsArr.map((author) => [author.id, author.name]));
+  const commentCounts = await getCommentCountsByWorkIds(rows.map((work) => work.id));
+
+  return rows.map((work) => ({
+    ...work,
+    authorName: authorMap.get(work.authorId) || "알 수 없음",
+    commentCount: commentCounts[work.id] || 0,
+  }));
+}
+
 export async function createWork(input: {
   authorId: number;
   title: string;

@@ -15,6 +15,7 @@ import {
   getCommentsByWorkId,
   createComment,
   getRecentWorks,
+  getRecentWorksArchive,
   getCommentCountsByWorkIds,
   createWork,
   updateWork,
@@ -213,6 +214,7 @@ export const appRouter = router({
         const limit = input?.limit || 8;
         return getRecentWorks(limit);
       }),
+    recentArchive: publicProcedure.query(() => getRecentWorksArchive()),
   }),
 
   // Comments
