@@ -291,3 +291,15 @@ Clarification: lines 48–60 preserve the earlier user request history and its i
 
 - [x] Documentation: latest row-based indentation rule and superseding clarification recorded
 - [x] Documentation: previous stanza-based wording retained only as historical context
+
+- [x] Fix: 자동 들여쓰기(text-indent/padding-left 자동 적용) 완전 제거
+- [x] Fix: Enter로 입력한 줄바꿈을 WorkPage와 AdminEditor 미리보기에서 독립 행으로 그대로 표시
+- [x] Fix: 명시적 전각 공백·기존 두 칸 공백은 자동 변환 없이 원문 보존
+- [x] QA: 빈 줄과 ＜/< 독립 행 구분 유지
+- [x] QA: 대표 작품 데스크톱·모바일 줄바꿈 표시 확인
+- [x] Final: 자동 들여쓰기 취소 버전 체크포인트 저장
+
+Current rule clarification: previous entries describing automatic indentation by stanza or row are historical records of earlier iterations. The current implementation applies no automatic indentation at all. Only explicit source indentation is preserved; every Enter remains a separate rendered row, and blank lines/＜/< markers retain their separate meanings.
+
+- [x] Documentation: automatic indentation cancellation supersedes earlier row/stanza wording
+- [x] Documentation: Enter line breaks remain visible as independent rendered rows

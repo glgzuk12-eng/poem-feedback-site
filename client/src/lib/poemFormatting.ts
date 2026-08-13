@@ -30,10 +30,8 @@ function parseIndent(rawLine: string) {
 }
 
 /**
- * 각 논리 행의 첫 시각 행에만 자동 들여쓰기를 적용합니다.
- * `text-indent`를 사용하므로 한 논리 행이 화면에서 여러 줄로 감싸져도
- * 첫 줄만 안쪽으로 들어가고, 이어지는 시각 행은 본문 시작선에 맞습니다.
- * 전각 공백·기존 두 칸 공백은 명시적 들여쓰기로 보존합니다.
+ * Enter로 나뉜 논리 행을 각각 독립된 행으로 반환합니다.
+ * 자동 들여쓰기는 더 이상 적용하지 않으며, 원문에 있던 전각 공백·두 칸 공백만 보존합니다.
  */
 export function formatPoemLines(content: string): FormattedPoemLine[] {
   const result: FormattedPoemLine[] = [];
@@ -52,7 +50,7 @@ export function formatPoemLines(content: string): FormattedPoemLine[] {
     }
 
     const { text, explicitIndent } = parseIndent(rawLine);
-    result.push({ kind: "line", text, explicitIndent, autoIndent: explicitIndent === 0 ? 1 : 0 });
+    result.push({ kind: "line", text, explicitIndent, autoIndent: 0 });
   }
 
   return result;
@@ -63,10 +61,7 @@ export function getEffectiveIndent(line: FormattedPoemLine) {
 }
 
 export function getDisplayIndentStyle(line: FormattedPoemLine) {
-  const style: { paddingLeft?: string; textIndent?: string } = {};
-  if (line.explicitIndent > 0) style.paddingLeft = `${line.explicitIndent}em`;
-  if (line.autoIndent > 0) style.textIndent = `${line.autoIndent}em`;
-  return Object.keys(style).length > 0 ? style : undefined;
+  return line.explicitIndent > 0 ? { paddingLeft: `${line.explicitIndent}em` } : undefined;
 }
 
 export function addOneIndent(line: string) {
@@ -105,5 +100,5 @@ export function isStanzaMarker(line: string) {
 }
 
 export function getPoemIndentHint() {
-  return "각 행의 첫 시각 행에 자동 들여쓰기가 적용됩니다. 화면에서 줄이 감싸져도 이어지는 줄은 본문 시작선에 맞습니다.";
+  return "Enter 줄바꿈은 작품에서 독립된 행으로 표시됩니다. 자동 들여쓰기는 적용하지 않습니다.";
 }
