@@ -279,3 +279,15 @@ Input fix note: 이전 textareaRef useCallback([])가 최초 content 클로저�
 - [x] Responsive QA: 글쓰기 워크스페이스 데스크톱·모바일 검증
 - [x] Regression QA: 관리자 인증·댓글·작품 상세·기존 들여쓰기 검증
 - [x] Final: 테스트 및 체크포인트 저장
+
+- [x] Fix: 자동 들여쓰기 기준을 ‘한 연의 첫 행’에서 ‘각 행의 시작 부분’으로 변경
+- [x] Fix: WorkPage와 AdminEditor 미리보기에서 각 행 자동 들여쓰기 동기화
+- [x] Fix: 기존 전각 공백·일반 공백 명시적 들여쓰기와 ＜/빈 줄 구분 호환
+- [x] QA: 한 행·여러 행·빈 행·명시적 들여쓰기 대표 케이스 검증
+- [x] QA: 데스크톱·모바일 대표 작품 화면 검증
+- [x] Final: 최신 수정 체크포인트 저장
+
+Clarification: lines 48–60 preserve the earlier user request history and its initial interpretation. The current rule supersedes that interpretation: each non-empty, non-marker logical poem line receives `text-indent: 1em` for its first visual line; wrapped continuation lines align to the text block, while explicit full-width/two-space indentation remains `padding-left` based. Empty lines and standalone ＜/< markers have no automatic indent.
+
+- [x] Documentation: latest row-based indentation rule and superseding clarification recorded
+- [x] Documentation: previous stanza-based wording retained only as historical context

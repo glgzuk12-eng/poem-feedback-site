@@ -29,40 +29,32 @@ function parseIndent(rawLine: string) {
   return { text, explicitIndent };
 }
 
-/** 빈 줄 또는 ＜/<를 연 경계로 삼고, 두 줄 이상 연의 첫 행만 자동 들여씁니다. */
+/**
+ * 각 논리 행의 첫 시각 행에만 자동 들여쓰기를 적용합니다.
+ * `text-indent`를 사용하므로 한 논리 행이 화면에서 여러 줄로 감싸져도
+ * 첫 줄만 안쪽으로 들어가고, 이어지는 시각 행은 본문 시작선에 맞습니다.
+ * 전각 공백·기존 두 칸 공백은 명시적 들여쓰기로 보존합니다.
+ */
 export function formatPoemLines(content: string): FormattedPoemLine[] {
   const result: FormattedPoemLine[] = [];
-  let stanzaIndexes: number[] = [];
-
-  const finishStanza = () => {
-    if (stanzaIndexes.length >= 2) {
-      const first = result[stanzaIndexes[0]];
-      if (first && first.explicitIndent === 0) first.autoIndent = 1;
-    }
-    stanzaIndexes = [];
-  };
 
   for (const rawLine of content.replace(/\r\n?/g, "\n").split("\n")) {
     const trimmed = rawLine.trim();
 
     if (!trimmed) {
-      finishStanza();
       result.push({ kind: "gap", text: "", explicitIndent: 0, autoIndent: 0 });
       continue;
     }
 
     if (STANZA_MARKERS.has(trimmed)) {
-      finishStanza();
       result.push({ kind: "marker", text: trimmed, explicitIndent: 0, autoIndent: 0 });
       continue;
     }
 
     const { text, explicitIndent } = parseIndent(rawLine);
-    result.push({ kind: "line", text, explicitIndent, autoIndent: 0 });
-    stanzaIndexes.push(result.length - 1);
+    result.push({ kind: "line", text, explicitIndent, autoIndent: explicitIndent === 0 ? 1 : 0 });
   }
 
-  finishStanza();
   return result;
 }
 
@@ -71,8 +63,10 @@ export function getEffectiveIndent(line: FormattedPoemLine) {
 }
 
 export function getDisplayIndentStyle(line: FormattedPoemLine) {
-  const indent = getEffectiveIndent(line);
-  return indent > 0 ? { paddingLeft: `${indent}em` } : undefined;
+  const style: { paddingLeft?: string; textIndent?: string } = {};
+  if (line.explicitIndent > 0) style.paddingLeft = `${line.explicitIndent}em`;
+  if (line.autoIndent > 0) style.textIndent = `${line.autoIndent}em`;
+  return Object.keys(style).length > 0 ? style : undefined;
 }
 
 export function addOneIndent(line: string) {
@@ -111,5 +105,5 @@ export function isStanzaMarker(line: string) {
 }
 
 export function getPoemIndentHint() {
-  return "두 줄 이상인 연의 첫 행에 자동 들여쓰기가 적용됩니다.";
+  return "각 행의 첫 시각 행에 자동 들여쓰기가 적용됩니다. 화면에서 줄이 감싸져도 이어지는 줄은 본문 시작선에 맞습니다.";
 }
