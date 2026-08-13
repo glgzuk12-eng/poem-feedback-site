@@ -9,29 +9,13 @@ export type FormattedPoemLine = {
 
 const STANZA_MARKERS = new Set(["＜", "<"]);
 
-function parseIndent(rawLine: string) {
-  let text = rawLine;
-  let explicitIndent = 0;
-
-  while (text.startsWith("　")) {
-    explicitIndent += 1;
-    text = text.slice(1);
-  }
-
-  if (explicitIndent === 0) {
-    const match = text.match(/^( {2})+/);
-    if (match) {
-      explicitIndent = match[0].length / 2;
-      text = text.slice(match[0].length);
-    }
-  }
-
-  return { text, explicitIndent };
+function preserveSourceLine(rawLine: string) {
+  return { text: rawLine, explicitIndent: 0 };
 }
 
 /**
  * Enter로 나뉜 논리 행을 각각 독립된 행으로 반환합니다.
- * 자동 들여쓰기는 더 이상 적용하지 않으며, 원문에 있던 전각 공백·두 칸 공백만 보존합니다.
+ * 자동 들여쓰기는 더 이상 적용하지 않으며, 원문에 있던 모든 일반·연속·전각 공백을 그대로 보존합니다.
  */
 export function formatPoemLines(content: string): FormattedPoemLine[] {
   const result: FormattedPoemLine[] = [];
@@ -45,11 +29,11 @@ export function formatPoemLines(content: string): FormattedPoemLine[] {
     }
 
     if (STANZA_MARKERS.has(trimmed)) {
-      result.push({ kind: "marker", text: trimmed, explicitIndent: 0, autoIndent: 0 });
+      result.push({ kind: "marker", text: rawLine, explicitIndent: 0, autoIndent: 0 });
       continue;
     }
 
-    const { text, explicitIndent } = parseIndent(rawLine);
+    const { text, explicitIndent } = preserveSourceLine(rawLine);
     result.push({ kind: "line", text, explicitIndent, autoIndent: 0 });
   }
 
@@ -100,5 +84,5 @@ export function isStanzaMarker(line: string) {
 }
 
 export function getPoemIndentHint() {
-  return "Enter 줄바꿈은 작품에서 독립된 행으로 표시됩니다. 자동 들여쓰기는 적용하지 않습니다.";
+  return "Enter 줄바꿈과 원문의 공백을 작품에 그대로 표시합니다. 자동 들여쓰기는 적용하지 않습니다.";
 }

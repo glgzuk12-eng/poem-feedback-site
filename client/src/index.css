@@ -90,6 +90,7 @@
   line-height: 2.4;
   letter-spacing: -0.005em;
   word-break: keep-all;
+  white-space: pre-wrap;
   color: rgba(0, 0, 0, 0.85);
 }
 
@@ -103,6 +104,7 @@
 /* Individual line in book */
 .book-line {
   min-height: 2.4em;
+  white-space: pre-wrap;
 }
 
 /* Stanza gap - slightly larger than one line */
@@ -142,6 +144,7 @@
   line-height: 2.2;
   letter-spacing: -0.01em;
   word-break: keep-all;
+  white-space: pre-wrap;
   text-align: justify;
 }
 

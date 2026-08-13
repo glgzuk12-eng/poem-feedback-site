@@ -122,21 +122,9 @@ function ContentPreview({ content, type, fontSize, lineHeight }: { content: stri
       if (line.trim() === "＜" || line.trim() === "<") return <div key={i} className="book-line">{line.trim()}</div>;
       if (!line.trim()) return <div key={i} className="stanza-gap" />;
 
-      let indent = 0;
-      let text = line;
-      while (text.startsWith("　")) {
-        indent += 1;
-        text = text.slice(1);
-      }
-      if (indent === 0) {
-        const leadingSpaces = text.match(/^(\s*)/)?.[1]?.length || 0;
-        indent = Math.floor(leadingSpaces / 2);
-        if (indent > 0) text = text.trimStart();
-      }
-
       return (
-        <div key={i} className="book-line" style={indent > 0 ? { paddingLeft: `${indent}em` } : undefined}>
-          {parseInlineFormatting(text)}
+        <div key={i} className="book-line">
+          {parseInlineFormatting(line)}
         </div>
       );
     });

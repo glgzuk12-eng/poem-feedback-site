@@ -303,3 +303,11 @@ Current rule clarification: previous entries describing automatic indentation by
 
 - [x] Documentation: automatic indentation cancellation supersedes earlier row/stanza wording
 - [x] Documentation: Enter line breaks remain visible as independent rendered rows
+
+- [x] Fix: 업로드된 작품의 일반 공백·연속 공백·전각 공백을 원문 그대로 보존
+- [x] Fix: WorkPage와 AdminEditor 미리보기의 CSS white-space 규칙 통일
+- [x] Fix: 공백 보존과 기존 줄바꿈·＜/< marker·명시적 들여쓰기 호환
+- [x] QA: 한 칸·두 칸·여러 칸·전각 공백 및 공백으로 시작하는 행 검증
+- [x] QA: 관리자 입력→미리보기→저장→작품 상세 공백 유지 검증
+- [x] QA: 데스크톱·모바일 원문 느낌 검증
+- [x] Final: 공백 보존 수정 체크포인트 저장

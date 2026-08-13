@@ -97,15 +97,9 @@ function BookPage({
             }
             if (!line.trim()) return <div key={i} className="stanza-gap" />;
 
-            const leadingSpaces = line.match(/^(\s*)/)?.[1]?.length || 0;
-            const indentEm = Math.floor(leadingSpaces / 2);
             return (
-              <div
-                key={i}
-                className="book-line"
-                style={indentEm > 0 ? { paddingLeft: `${indentEm}em` } : undefined}
-              >
-                {parseInlineFormatting(line.trimStart())}
+              <div key={i} className="book-line">
+                {parseInlineFormatting(line)}
               </div>
             );
           })}
