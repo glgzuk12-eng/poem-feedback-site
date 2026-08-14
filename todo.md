@@ -346,3 +346,12 @@ Current rule clarification: previous entries describing automatic indentation by
 - [x] Add unit coverage for representative Seo-si, Nim-ui Chimmuk, Ogamdo, stepped arrangement, and long-token cases
 - [x] Run TypeScript, Vitest, production build, and visual QA
 - [x] Save checkpoint and deliver the live version
+
+## Reference book layout revision
+
+- [x] Analyze the attached poetry-book PDF for page size, margins, text block, typography, stanza spacing, page numbering, and running elements
+- [x] Compare the reference book layout with the current WorkPage rendering
+- [x] Adjust WorkPage and shared CSS to reproduce the reference book reading experience while preserving originalContent and layoutSpec behavior
+- [x] Verify representative works at desktop, tablet, and mobile widths without horizontal scrolling
+- [x] Run TypeScript, Vitest, production build, and visual regression checks
+- [x] Save checkpoint and deliver the updated live version

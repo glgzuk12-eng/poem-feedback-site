@@ -72,50 +72,111 @@
 
 /* ===== Book Page Styles ===== */
 
-/* Book page container */
+/* Book page container: proportions and quiet furniture follow the reference book. */
 .book-page {
-  min-height: 50vh;
+  --book-ratio: 0.649;
   position: relative;
+  width: min(100%, 42rem);
+  min-height: clamp(42rem, 154vw, 64rem);
+  overflow: visible;
+  background: #fffefa;
+  border: 1px solid rgba(24, 24, 24, 0.055);
+  box-shadow: 0 1px 5px rgba(0, 0, 0, 0.025);
 }
 
-@media (min-width: 640px) {
-  .book-page {
-    min-height: 60vh;
-  }
+.book-page::before,
+.book-page::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0.58;
+  background:
+    linear-gradient(#151515, #151515) 0 0 / 26px 1px no-repeat,
+    linear-gradient(#151515, #151515) 0 0 / 1px 26px no-repeat,
+    linear-gradient(#151515, #151515) 100% 0 / 26px 1px no-repeat,
+    linear-gradient(#151515, #151515) 100% 0 / 1px 26px no-repeat,
+    linear-gradient(#151515, #151515) 0 100% / 26px 1px no-repeat,
+    linear-gradient(#151515, #151515) 0 100% / 1px 26px no-repeat,
+    linear-gradient(#151515, #151515) 100% 100% / 26px 1px no-repeat,
+    linear-gradient(#151515, #151515) 100% 100% / 1px 26px no-repeat;
 }
 
-/* Book body text - small type, generous leading */
+.book-page::after {
+  inset: 7px;
+  opacity: 0.38;
+}
+
+.book-page-content {
+  position: relative;
+  z-index: 1;
+  min-height: 100%;
+  padding: clamp(3.6rem, 8vw, 5.5rem) clamp(2.75rem, 13vw, 7rem) clamp(5.25rem, 13vw, 8rem);
+}
+
+.book-reading-column {
+  width: min(100%, 56%);
+  margin-inline-start: 8%;
+}
+
+.book-title-block {
+  margin-bottom: clamp(1.9rem, 4.5vw, 3.25rem);
+}
+
+.book-title {
+  margin: 0;
+  color: rgba(0, 0, 0, 0.88);
+  font-family: Georgia, "Times New Roman", "Noto Serif KR", serif;
+  font-size: clamp(0.76rem, 1.25vw, 1rem);
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  line-height: 1.35;
+}
+
+/* Book body text - compact book face with a narrow measure and generous silence. */
 .book-body-text {
-  --poem-measure: 30;
-  --poem-fit-width: 30;
-  --poem-turnover: 1.4;
+  --poem-measure: 24;
+  --poem-fit-width: 24;
+  --poem-turnover: 1;
   --poem-explicit-indent: 0;
   --poem-overflow-wrap: normal;
   --poem-text-align: start;
   container-type: inline-size;
-  width: min(100%, calc(var(--poem-measure) * 1em));
+  width: min(100%, calc(var(--poem-measure) * 0.72em));
   max-width: 100%;
-  margin-inline: auto;
-  font-size: clamp(0.68rem, calc(100cqw / max(var(--poem-fit-width), 18) / 1.55), var(--poem-max-font-size, 0.85rem));
-  line-height: 2.4;
-  letter-spacing: -0.005em;
+  margin-inline: 0;
+  font-family: Georgia, "Times New Roman", "Noto Serif KR", serif;
+  font-size: clamp(0.66rem, calc(100cqw / max(var(--poem-fit-width), 18) / 1.7), var(--poem-max-font-size, 0.78rem));
+  line-height: 2.18;
+  letter-spacing: -0.012em;
   word-break: keep-all;
   overflow-wrap: var(--poem-overflow-wrap);
   white-space: pre-wrap;
   text-align: var(--poem-text-align);
-  color: rgba(0, 0, 0, 0.85);
+  color: rgba(0, 0, 0, 0.78);
 }
 
-@media (min-width: 640px) {
-  .book-body-text {
-    line-height: 2.5;
-  }
+.essay-book-body {
+  width: min(100%, 100%);
+  font-size: clamp(0.68rem, 1.05vw, 0.82rem);
+  line-height: 2.05;
 }
 
-/* Individual logical line: first visual row starts at its source indent,
-   while wrapped visual rows turn inward by the configured turnover amount. */
+.essay-book-body .essay-line {
+  min-height: 0;
+  padding-inline-start: 0;
+  text-indent: 1em;
+}
+
+.essay-book-body .book-marker-line {
+  text-indent: 0;
+}
+
+/* Individual logical line: wrapped visual rows turn inward, while the first
+   visual row retains the source line's baseline and explicit whitespace. */
 .book-line {
-  min-height: 2.4em;
+  min-height: 2.18em;
   white-space: pre-wrap;
   padding-inline-start: calc((var(--poem-turnover) + var(--poem-explicit-indent)) * 1em);
   text-indent: calc(var(--poem-turnover) * -1em);
@@ -136,14 +197,55 @@
   min-height: 0;
 }
 
-/* Stanza gap - slightly larger than one line */
+/* Stanza gap: one extra line of breathing room, not a card-like divider. */
 .stanza-gap {
-  height: 2em;
+  height: 1.35em;
 }
 
-@media (min-width: 640px) {
-  .stanza-gap {
-    height: 2.4em;
+.book-side-marks {
+  display: none;
+}
+
+.book-page-number {
+  z-index: 2;
+  bottom: clamp(1.3rem, 5vw, 3rem);
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: clamp(0.5rem, 0.75vw, 0.64rem);
+  font-style: italic;
+  letter-spacing: 0.04em;
+  color: rgba(0, 0, 0, 0.42);
+}
+
+@media (max-width: 639px) {
+  .book-page {
+    width: 100%;
+  }
+
+  .book-page-content {
+    padding: 3.5rem 2.25rem 4.75rem;
+  }
+
+  .book-reading-column {
+    width: 62%;
+    margin-inline-start: 7%;
+  }
+
+  .book-body-text {
+    width: 100%;
+    font-size: clamp(0.64rem, 2.7vw, 0.75rem);
+    line-height: 2.08;
+  }
+
+  .essay-book-body {
+    width: 100%;
+  }
+
+  .book-title-block {
+    margin-bottom: 2rem;
+  }
+
+  .book-page-number {
+    bottom: 1.35rem;
   }
 }
 

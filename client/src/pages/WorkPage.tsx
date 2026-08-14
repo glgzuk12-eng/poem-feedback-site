@@ -41,56 +41,36 @@ function BookPage({
   layoutSpec?: PoemLayoutSpec;
 }) {
   const lines = type === "poem" ? formatPoemLines(content) : content.split("\n");
-  const typesetStyle = layoutSpec
-    ? ({
-        "--poem-measure": String(layoutSpec.measure),
-        "--poem-fit-width": String(layoutSpec.fitWidth),
-        "--poem-turnover": String(layoutSpec.turnover),
-        "--poem-overflow-wrap": layoutSpec.overflowWrapAnywhere ? "anywhere" : "normal",
-        "--poem-text-align": layoutSpec.justify ? "justify" : "start",
-      } as React.CSSProperties)
-    : undefined;
+  const typesetStyle = ({
+    "--poem-measure": String(layoutSpec?.measure ?? 24),
+    "--poem-fit-width": String(layoutSpec?.fitWidth ?? 24),
+    "--poem-turnover": String(layoutSpec?.turnover ?? 1),
+    "--poem-overflow-wrap": layoutSpec?.overflowWrapAnywhere ? "anywhere" : "normal",
+    "--poem-text-align": layoutSpec?.justify ? "justify" : "start",
+  } as React.CSSProperties);
   const bodyClassName = layoutSpec
     ? `book-body-text poem-profile-${layoutSpec.profile.toLowerCase()}`
-    : "book-body-text";
+    : "book-body-text essay-book-body";
 
   return (
-    <div className="book-page relative bg-white border border-black/[0.06] shadow-[0_1px_3px_rgba(0,0,0,0.04)] mb-4 sm:mb-6">
-      {/* Decorative lines - left side for even pages */}
-      {isEven && (
-        <div className="absolute left-2 sm:left-3 top-0 bottom-0 flex flex-col justify-between py-8 sm:py-12 pointer-events-none">
-          <div className="w-4 sm:w-5 h-px bg-black/30" />
-          <div className="w-3 sm:w-4 h-px bg-black/30" />
-          <div className="w-4 sm:w-5 h-px bg-black/30" />
-        </div>
-      )}
-
-      {/* Decorative lines - right side for odd pages */}
-      {!isEven && (
-        <div className="absolute right-2 sm:right-3 top-0 bottom-0 flex flex-col justify-between py-12 sm:py-16 pointer-events-none">
-          <div className="w-4 sm:w-5 h-px bg-black/30 ml-auto" />
-          <div className="w-3 sm:w-4 h-px bg-black/30 ml-auto" />
-        </div>
-      )}
+    <div className="book-page mb-4 sm:mb-8">
+      {/* Corner registration marks are drawn by .book-page::before/after. */}
 
       {/* Page content area */}
       <div
-        className={`
-          px-8 sm:px-14 md:px-20 py-10 sm:py-14 md:py-18
-          ${isEven ? "pl-10 sm:pl-16 md:pl-24" : "pr-10 sm:pr-16 md:pr-24"}
-        `}
+        className={`book-page-content ${isEven ? "book-page-content-even" : "book-page-content-odd"}`}
+        style={typesetStyle}
       >
-        {/* Title on first page */}
-        {isFirstPage && title && (
-          <div className="mb-8 sm:mb-12">
-            <h2 className="text-base sm:text-lg font-bold text-black tracking-tight leading-tight">
-              {title}
-            </h2>
-          </div>
-        )}
+        <div className="book-reading-column">
+          {/* Title on first page */}
+          {isFirstPage && title && (
+            <div className="book-title-block">
+              <h2 className="book-title">{title}</h2>
+            </div>
+          )}
 
-        {/* Body text */}
-        <div className={bodyClassName} style={typesetStyle}>
+          {/* Body text */}
+          <div className={bodyClassName}>
           {lines.map((entry, i) => {
             if (type === "poem") {
               const line = entry as FormattedPoemLine;
@@ -112,30 +92,22 @@ function BookPage({
             }
             if (!line.trim()) return <div key={i} className="stanza-gap" />;
 
-            return (
-              <div key={i} className="book-line">
-                {parseInlineFormatting(line)}
-              </div>
-            );
+                          return (
+                <div key={i} className="book-line essay-line">
+                  {parseInlineFormatting(line)}
+                </div>
+              );
+
           })}
+          </div>
         </div>
       </div>
 
       {/* Footer: page number and author name */}
       <div
-        className={`
-          absolute bottom-3 sm:bottom-4
-          ${isEven ? "left-8 sm:left-14 md:left-20" : "right-8 sm:right-14 md:right-20"}
-          text-[10px] sm:text-[11px] text-black/35 font-light tracking-wide
-        `}
+        className={`book-page-number absolute ${isEven ? "left-[13%]" : "right-[13%]"}`}
       >
-        {isEven ? (
-          <span>{pageNumber}</span>
-        ) : (
-          <span>
-            {authorName} {pageNumber}
-          </span>
-        )}
+        <span>{pageNumber}</span>
       </div>
     </div>
   );
