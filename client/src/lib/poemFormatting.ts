@@ -45,7 +45,9 @@ export function getEffectiveIndent(line: FormattedPoemLine) {
 }
 
 export function getDisplayIndentStyle(line: FormattedPoemLine) {
-  return line.explicitIndent > 0 ? { paddingLeft: `${line.explicitIndent}em` } : undefined;
+  return line.explicitIndent > 0
+    ? ({ "--poem-explicit-indent": String(line.explicitIndent) } as React.CSSProperties)
+    : undefined;
 }
 
 export function addOneIndent(line: string) {

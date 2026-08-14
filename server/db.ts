@@ -1,6 +1,7 @@
 import { eq, asc, desc, inArray, sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
 import { InsertUser, users, authors, works, comments } from "../drizzle/schema";
+import { analyzePoem, withPoemLayoutOverrides, type PoemLayoutSpec } from "../shared/poemLayout";
 import { ENV } from './_core/env';
 
 let _db: ReturnType<typeof drizzle> | null = null;
@@ -202,6 +203,7 @@ export async function createWork(input: {
   type: "poem" | "essay";
   content: string;
   sortOrder?: number;
+  layoutOverrides?: Partial<Pick<PoemLayoutSpec, "profile" | "turnover" | "measure" | "justify">>;
 }) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
@@ -213,12 +215,19 @@ export async function createWork(input: {
     .replace(/\s+/g, "-")
     .slice(0, 100) + "-" + Date.now().toString(36);
 
+  const autoLayout = input.type === "poem" ? analyzePoem(input.content) : null;
+  const layoutSpec = autoLayout && input.layoutOverrides
+    ? withPoemLayoutOverrides(autoLayout, input.layoutOverrides)
+    : autoLayout;
+
   await db.insert(works).values({
     authorId: input.authorId,
     title: input.title,
     slug,
     type: input.type,
     content: input.content,
+    originalContent: input.content,
+    layoutSpec,
     sortOrder: input.sortOrder ?? 0,
   });
 
@@ -230,6 +239,7 @@ export async function updateWork(id: number, input: {
   type?: "poem" | "essay";
   content?: string;
   sortOrder?: number;
+  layoutOverrides?: Partial<Pick<PoemLayoutSpec, "profile" | "turnover" | "measure" | "justify">>;
 }) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
@@ -237,8 +247,25 @@ export async function updateWork(id: number, input: {
   const updateData: Record<string, unknown> = {};
   if (input.title !== undefined) updateData.title = input.title;
   if (input.type !== undefined) updateData.type = input.type;
-  if (input.content !== undefined) updateData.content = input.content;
+  if (input.content !== undefined) {
+    updateData.content = input.content;
+    updateData.originalContent = input.content;
+  }
   if (input.sortOrder !== undefined) updateData.sortOrder = input.sortOrder;
+
+  if (input.content !== undefined || input.type !== undefined || input.layoutOverrides !== undefined) {
+    const current = await getWorkById(id);
+    const nextType = input.type ?? current?.type;
+    const nextContent = input.content ?? current?.content ?? "";
+    if (nextType === "poem") {
+      const autoLayout = analyzePoem(nextContent);
+      updateData.layoutSpec = input.layoutOverrides
+        ? withPoemLayoutOverrides(autoLayout, input.layoutOverrides)
+        : autoLayout;
+    } else {
+      updateData.layoutSpec = null;
+    }
+  }
 
   if (Object.keys(updateData).length === 0) return;
 

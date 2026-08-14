@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type KeyboardEvent as ReactKeyboardEvent } from "react";
+import { useEffect, useMemo, useState, type CSSProperties, type KeyboardEvent as ReactKeyboardEvent } from "react";
 import { Link, useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { useAdmin } from "@/hooks/useAdmin";
@@ -32,6 +32,7 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { formatPoemLines, getDisplayIndentStyle, indentSelectedLines, type FormattedPoemLine } from "@/lib/poemFormatting";
 import { parseInlineFormatting } from "@/components/PoemInlineText";
+import { analyzePoem, withPoemLayoutOverrides, type PoemLayoutSpec, type PoemProfile } from "../../../shared/poemLayout";
 
 const DRAFT_PREFIX = "poem-editor:draft:";
 
@@ -41,6 +42,10 @@ type DraftPayload = {
   type: "poem" | "essay";
   content: string;
   savedAt: string;
+  profileOverride?: PoemProfile | "AUTO";
+  turnoverOverride?: number | "AUTO";
+  measureOverride?: number | "AUTO";
+  justifyOverride?: "AUTO" | "LEFT" | "JUSTIFY";
 };
 
 function readDraft(key: string): DraftPayload | null {
@@ -102,7 +107,7 @@ function EditorToolbar({
   );
 }
 
-function ContentPreview({ content, type, fontSize, lineHeight }: { content: string; type: "poem" | "essay"; fontSize: number; lineHeight: number }) {
+function ContentPreview({ content, type, fontSize, lineHeight, layoutSpec }: { content: string; type: "poem" | "essay"; fontSize: number; lineHeight: number; layoutSpec?: PoemLayoutSpec }) {
   const rendered = useMemo(() => {
     if (!content) return null;
     const lines = type === "poem" ? formatPoemLines(content) : content.split("\n");
@@ -112,26 +117,37 @@ function ContentPreview({ content, type, fontSize, lineHeight }: { content: stri
         const line = entry as FormattedPoemLine;
         if (line.kind === "gap") return <div key={i} className="stanza-gap" />;
         return (
-          <div key={i} className="book-line" style={line.kind === "line" ? getDisplayIndentStyle(line) : undefined}>
+          <div key={i} className={`book-line ${line.kind === "marker" ? "book-marker-line" : ""}`} style={line.kind === "line" ? getDisplayIndentStyle(line) : undefined}>
             {parseInlineFormatting(line.text)}
           </div>
         );
       }
 
       const line = entry as string;
-      if (line.trim() === "＜" || line.trim() === "<") return <div key={i} className="book-line">{line.trim()}</div>;
+      if (line.trim() === "＜" || line.trim() === "<") return <div key={i} className="book-line book-marker-line">{line.trim()}</div>;
       if (!line.trim()) return <div key={i} className="stanza-gap" />;
 
       return (
-        <div key={i} className="book-line">
+        <div key={i} className="book-line essay-line">
           {parseInlineFormatting(line)}
         </div>
       );
     });
   }, [content, type]);
 
+  const typesetStyle = layoutSpec
+    ? ({
+        "--poem-measure": String(layoutSpec.measure),
+        "--poem-fit-width": String(layoutSpec.fitWidth),
+        "--poem-turnover": String(layoutSpec.turnover),
+        "--poem-overflow-wrap": layoutSpec.overflowWrapAnywhere ? "anywhere" : "normal",
+        "--poem-text-align": layoutSpec.justify ? "justify" : "start",
+        "--poem-max-font-size": `${fontSize}px`,
+      } as CSSProperties)
+    : ({ fontSize: `${fontSize}px`, lineHeight } as CSSProperties);
+
   return (
-    <div className={type === "poem" ? "book-body-text" : "essay-content"} style={{ fontSize: `${fontSize}px`, lineHeight }}>
+    <div className={layoutSpec ? `book-body-text poem-profile-${layoutSpec.profile.toLowerCase()}` : "essay-content"} style={{ ...typesetStyle, lineHeight }}>
       {rendered}
     </div>
   );
@@ -168,11 +184,36 @@ export default function AdminEditor() {
   const [fontSize, setFontSize] = useState(16);
   const [lineHeight, setLineHeight] = useState(2);
   const [editorWidth, setEditorWidth] = useState<"narrow" | "standard" | "wide">("standard");
+  const [profileOverride, setProfileOverride] = useState<PoemProfile | "AUTO">("AUTO");
+  const [turnoverOverride, setTurnoverOverride] = useState<number | "AUTO">("AUTO");
+  const [measureOverride, setMeasureOverride] = useState<number | "AUTO">("AUTO");
+  const [justifyOverride, setJustifyOverride] = useState<"AUTO" | "LEFT" | "JUSTIFY">("AUTO");
+  const [previewDevice, setPreviewDevice] = useState<"desktop" | "tablet" | "mobile">("desktop");
   const [findQuery, setFindQuery] = useState("");
   const [cursorPosition, setCursorPosition] = useState({ line: 1, column: 1 });
 
   const draftKey = `${DRAFT_PREFIX}${editingId ?? "new"}`;
   const textareaSelector = "#editor-textarea";
+
+  const analyzedLayout = useMemo(() => {
+    if (type !== "poem" || !content) return undefined;
+    return analyzePoem(content);
+  }, [content, type]);
+
+  const layoutOverrides = useMemo<Partial<Pick<PoemLayoutSpec, "profile" | "turnover" | "measure" | "justify">> | undefined>(() => {
+    if (type !== "poem") return undefined;
+    const overrides: Partial<Pick<PoemLayoutSpec, "profile" | "turnover" | "measure" | "justify">> = {};
+    if (profileOverride !== "AUTO") overrides.profile = profileOverride;
+    if (turnoverOverride !== "AUTO") overrides.turnover = turnoverOverride;
+    if (measureOverride !== "AUTO") overrides.measure = measureOverride;
+    if (justifyOverride !== "AUTO") overrides.justify = justifyOverride === "JUSTIFY";
+    return Object.keys(overrides).length > 0 ? overrides : undefined;
+  }, [justifyOverride, measureOverride, profileOverride, turnoverOverride, type]);
+
+  const previewLayout = useMemo(() => {
+    if (!analyzedLayout) return undefined;
+    return layoutOverrides ? withPoemLayoutOverrides(analyzedLayout, layoutOverrides) : analyzedLayout;
+  }, [analyzedLayout, layoutOverrides]);
 
   const createMutation = trpc.admin.createWork.useMutation({
     onSuccess: () => {
@@ -215,14 +256,14 @@ export default function AdminEditor() {
     if (!showEditor || !isDirty) return;
     setSaveStatus("초안 저장 중...");
     const timer = window.setTimeout(() => {
-      const payload: DraftPayload = { authorId, title, type, content, savedAt: new Date().toISOString() };
+      const payload: DraftPayload = { authorId, title, type, content, profileOverride, turnoverOverride, measureOverride, justifyOverride, savedAt: new Date().toISOString() };
       localStorage.setItem(draftKey, JSON.stringify(payload));
       setDraftAvailable(true);
       setLastSavedAt(payload.savedAt);
       setSaveStatus("로컬 초안 저장됨");
     }, 700);
     return () => window.clearTimeout(timer);
-  }, [authorId, content, draftKey, isDirty, showEditor, title, type]);
+  }, [authorId, content, draftKey, isDirty, justifyOverride, measureOverride, profileOverride, showEditor, title, turnoverOverride, type]);
 
   function updateCursorPosition(textarea: HTMLTextAreaElement) {
     const beforeCursor = textarea.value.slice(0, textarea.selectionStart);
@@ -246,6 +287,11 @@ export default function AdminEditor() {
     setSaveStatus("저장됨");
     setLastSavedAt(null);
     setFocusMode(false);
+    setProfileOverride("AUTO");
+    setTurnoverOverride("AUTO");
+    setMeasureOverride("AUTO");
+    setJustifyOverride("AUTO");
+    setPreviewDevice("desktop");
   }
 
   function openNewEditor() {
@@ -257,13 +303,32 @@ export default function AdminEditor() {
     setIsDirty(false);
     setSaveStatus("새 초안");
     setLastSavedAt(null);
+    setProfileOverride("AUTO");
+    setTurnoverOverride("AUTO");
+    setMeasureOverride("AUTO");
+    setJustifyOverride("AUTO");
+    setPreviewDevice("desktop");
     setShowEditor(true);
   }
 
   async function fetchWorkContent(id: number) {
     try {
       const result = await trpcUtils.works.getById.fetch({ id });
-      if (result) setContent(result.content);
+      if (result) {
+        setContent(result.originalContent ?? result.content);
+        const savedLayout = result.layoutSpec;
+        if (savedLayout && !savedLayout.autoDetected) {
+          setProfileOverride(savedLayout.profile);
+          setTurnoverOverride(savedLayout.turnover);
+          setMeasureOverride(savedLayout.measure);
+          setJustifyOverride(savedLayout.justify ? "JUSTIFY" : "LEFT");
+        } else {
+          setProfileOverride("AUTO");
+          setTurnoverOverride("AUTO");
+          setMeasureOverride("AUTO");
+          setJustifyOverride("AUTO");
+        }
+      }
     } catch {
       toast.error("작품 내용을 불러올 수 없습니다.");
     }
@@ -275,6 +340,10 @@ export default function AdminEditor() {
     setTitle(work.title);
     setType(work.type as "poem" | "essay");
     setContent("");
+    setProfileOverride("AUTO");
+    setTurnoverOverride("AUTO");
+    setMeasureOverride("AUTO");
+    setJustifyOverride("AUTO");
     setIsDirty(false);
     setSaveStatus("기존 작품 불러오는 중...");
     setShowEditor(true);
@@ -288,6 +357,10 @@ export default function AdminEditor() {
     setTitle(draft.title);
     setType(draft.type);
     setContent(draft.content);
+    setProfileOverride(draft.profileOverride ?? "AUTO");
+    setTurnoverOverride(draft.turnoverOverride ?? "AUTO");
+    setMeasureOverride(draft.measureOverride ?? "AUTO");
+    setJustifyOverride(draft.justifyOverride ?? "AUTO");
     setIsDirty(true);
     setSaveStatus("초안 복구됨");
     toast.success("저장된 초안을 복구했습니다.");
@@ -300,9 +373,9 @@ export default function AdminEditor() {
     }
     setSaveStatus("서버에 저장 중...");
     if (editingId) {
-      updateMutation.mutate({ id: editingId, title, type, content });
+      updateMutation.mutate({ id: editingId, title, type, content, layoutOverrides });
     } else {
-      createMutation.mutate({ authorId: authorId as number, title, type, content });
+      createMutation.mutate({ authorId: authorId as number, title, type, content, layoutOverrides });
     }
   }
 
@@ -468,11 +541,32 @@ export default function AdminEditor() {
               <label className="text-[10px] text-black/45">행간 <input type="range" min="1.4" max="2.6" step="0.1" value={lineHeight} onChange={(event) => setLineHeight(Number(event.target.value))} className="w-full accent-black" /></label>
               <label className="text-[10px] text-black/45">본문 폭 <select value={editorWidth} onChange={(event) => setEditorWidth(event.target.value as typeof editorWidth)} className="w-full mt-1 border border-black/12 bg-white px-1.5 py-1"><option value="narrow">좁게</option><option value="standard">표준</option><option value="wide">넓게</option></select></label>
               <button type="button" onClick={() => setEditorTheme((theme) => theme === "paper" ? "night" : "paper")} className="text-[10px] text-black/45 border border-black/12 px-2 py-1 self-end">{editorTheme === "paper" ? "밝은 편집" : "어두운 편집"}</button>
+              {type === "poem" && (
+                <div className="col-span-2 sm:col-span-4 flex flex-wrap items-center gap-2 pt-2 border-t border-black/8">
+                  <span className="text-[10px] text-black/40">자동 조판</span>
+                  <select value={profileOverride} onChange={(event) => { setProfileOverride(event.target.value as PoemProfile | "AUTO"); markDirty(); }} className="text-[10px] border border-black/12 bg-white px-2 py-1"><option value="AUTO">프로파일 자동</option><option value="STANDARD">표준시</option><option value="LONG">장행시</option><option value="PROSE">산문형</option><option value="SHAPED">배치시</option></select>
+                  <select value={turnoverOverride} onChange={(event) => { setTurnoverOverride(event.target.value === "AUTO" ? "AUTO" : Number(event.target.value)); markDirty(); }} className="text-[10px] border border-black/12 bg-white px-2 py-1"><option value="AUTO">내어쓰기 자동</option><option value="0">내어쓰기 없음</option><option value="1">1em</option><option value="1.4">1.4em</option><option value="2">2em</option><option value="2.4">2.4em</option></select>
+                  <select value={measureOverride} onChange={(event) => { setMeasureOverride(event.target.value === "AUTO" ? "AUTO" : Number(event.target.value)); markDirty(); }} className="text-[10px] border border-black/12 bg-white px-2 py-1"><option value="AUTO">본문 폭 자동</option><option value="22">22em</option><option value="26">26em</option><option value="30">30em</option><option value="34">34em</option><option value="36">36em</option></select>
+                  <select value={justifyOverride} onChange={(event) => { setJustifyOverride(event.target.value as typeof justifyOverride); markDirty(); }} className="text-[10px] border border-black/12 bg-white px-2 py-1"><option value="AUTO">정렬 자동</option><option value="LEFT">왼쪽 정렬</option><option value="JUSTIFY">양쪽 정렬</option></select>
+                </div>
+              )}
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-[180px_minmax(0,1fr)_minmax(280px,340px)] gap-0 mt-5 border-t border-black/8">
+            <div className="grid grid-cols-1 lg:grid-cols-[200px_minmax(0,1fr)_minmax(280px,360px)] gap-0 mt-5 border-t border-black/8">
               <aside className="hidden lg:block border-r border-black/8 p-4 bg-[#fbfbfa]">
                 <div className="flex items-center gap-2 mb-4"><SlidersHorizontal size={13} className="text-black/45" /><span className="text-[10px] uppercase tracking-[0.16em] text-black/45">문서 설정</span></div>
+                {type === "poem" && (
+                  <div className="mb-6 pb-4 border-b border-black/8">
+                    <p className="text-[10px] uppercase tracking-[0.14em] text-black/40 mb-3">자동 조판</p>
+                    <div className="space-y-2">
+                      <label className="block"><span className="text-[10px] text-black/45">프로파일</span><select value={profileOverride} onChange={(event) => { setProfileOverride(event.target.value as PoemProfile | "AUTO"); markDirty(); }} className="w-full mt-1 text-[10px] border border-black/12 bg-white px-2 py-1.5"><option value="AUTO">자동 ({analyzedLayout?.profile ?? "—"})</option><option value="STANDARD">표준시</option><option value="LONG">장행시</option><option value="PROSE">산문형</option><option value="SHAPED">배치시</option></select></label>
+                      <label className="block"><span className="text-[10px] text-black/45">내어쓰기</span><select value={turnoverOverride} onChange={(event) => { setTurnoverOverride(event.target.value === "AUTO" ? "AUTO" : Number(event.target.value)); markDirty(); }} className="w-full mt-1 text-[10px] border border-black/12 bg-white px-2 py-1.5"><option value="AUTO">자동 ({analyzedLayout?.turnover ?? "—"}em)</option><option value="0">없음</option><option value="1">1em</option><option value="1.4">1.4em</option><option value="2">2em</option><option value="2.4">2.4em</option></select></label>
+                      <label className="block"><span className="text-[10px] text-black/45">본문 폭</span><select value={measureOverride} onChange={(event) => { setMeasureOverride(event.target.value === "AUTO" ? "AUTO" : Number(event.target.value)); markDirty(); }} className="w-full mt-1 text-[10px] border border-black/12 bg-white px-2 py-1.5"><option value="AUTO">자동 ({analyzedLayout?.measure ?? "—"}em)</option><option value="22">22em</option><option value="26">26em</option><option value="30">30em</option><option value="34">34em</option><option value="36">36em</option></select></label>
+                      <label className="block"><span className="text-[10px] text-black/45">정렬</span><select value={justifyOverride} onChange={(event) => { setJustifyOverride(event.target.value as typeof justifyOverride); markDirty(); }} className="w-full mt-1 text-[10px] border border-black/12 bg-white px-2 py-1.5"><option value="AUTO">자동 ({analyzedLayout?.justify ? "양쪽" : "왼쪽"})</option><option value="LEFT">왼쪽</option><option value="JUSTIFY">양쪽</option></select></label>
+                    </div>
+                    <p className="text-[9px] leading-relaxed text-black/30 mt-3">저장 시 오버라이드만 기록하고, 원문과 Enter 줄바꿈은 그대로 보존합니다.</p>
+                  </div>
+                )}
                 <div className="space-y-4">
                   <label className="block"><span className="flex justify-between text-[10px] text-black/45 mb-1"><span>글자 크기</span><span>{fontSize}px</span></span><input type="range" min="13" max="22" value={fontSize} onChange={(event) => setFontSize(Number(event.target.value))} className="w-full accent-black" /></label>
                   <label className="block"><span className="flex justify-between text-[10px] text-black/45 mb-1"><span>행간</span><span>{lineHeight.toFixed(1)}</span></span><input type="range" min="1.4" max="2.6" step="0.1" value={lineHeight} onChange={(event) => setLineHeight(Number(event.target.value))} className="w-full accent-black" /></label>
@@ -496,10 +590,12 @@ export default function AdminEditor() {
                 </div>
               </div>
 
-              <div className="bg-white min-w-0">
-                <div className="flex items-center justify-between px-4 py-2 border-b border-black/8"><div className="flex items-center gap-2 text-[10px] uppercase tracking-[0.16em] text-black/40"><BookOpen size={12} /> 실제 미리보기</div><span className="text-[10px] text-black/25">WorkPage style</span></div>
-                <div className={`${editorWidthClass} mx-auto max-h-[620px] overflow-y-auto px-5 sm:px-7 py-6`}>
-                  {content ? <ContentPreview content={content} type={type} fontSize={fontSize} lineHeight={lineHeight} /> : <p className="text-xs text-black/25 leading-relaxed">내용을 입력하면 작품 상세 페이지와 같은 방식으로 미리보기가 표시됩니다.</p>}
+              <div className="bg-white min-w-0 overflow-hidden">
+                <div className="flex flex-wrap items-center justify-between gap-2 px-4 py-2 border-b border-black/8"><div className="flex items-center gap-2 text-[10px] uppercase tracking-[0.16em] text-black/40"><BookOpen size={12} /> 실제 미리보기</div><div className="flex items-center gap-1"><span className="text-[9px] text-black/25 mr-1">뷰포트</span>{(["desktop", "tablet", "mobile"] as const).map((device) => <button key={device} type="button" onClick={() => setPreviewDevice(device)} className={`px-1.5 py-1 text-[9px] border ${previewDevice === device ? "border-black bg-black text-white" : "border-black/10 text-black/35 hover:text-black"}`}>{device === "desktop" ? "Desktop" : device === "tablet" ? "Tablet" : "Mobile"}</button>)}</div></div>
+                <div className="max-h-[620px] overflow-y-auto px-3 sm:px-5 py-6 bg-[#f7f7f5]">
+                  <div className={`${previewDevice === "desktop" ? "w-full" : previewDevice === "tablet" ? "w-[min(100%,520px)]" : "w-[min(100%,300px)]"} mx-auto bg-[#f5f4f0] border border-black/8 shadow-[0_1px_3px_rgba(0,0,0,0.05)] px-4 sm:px-6 py-8 transition-[width] duration-200`}>
+                    {content ? <ContentPreview content={content} type={type} fontSize={fontSize} lineHeight={lineHeight} layoutSpec={previewLayout} /> : <p className="text-xs text-black/25 leading-relaxed">내용을 입력하면 작품 상세 페이지와 같은 방식으로 미리보기가 표시됩니다.</p>}
+                  </div>
                 </div>
               </div>
             </div>

@@ -319,3 +319,30 @@ Current rule clarification: previous entries describing automatic indentation by
 - [x] QA: 긴 문장은 화면 줄바꿈 시 이어지는 줄만 내어쓰기
 - [x] QA: 데스크톱·모바일에서 내어쓰기 확인
 - [x] Final: 자동 내어쓰기 체크포인트 저장
+
+- [x] Auto typesetting: visualWidth()와 analyzePoem() 독립 모듈 구현
+- [x] Auto typesetting: STANDARD/LONG/PROSE/SHAPED 프로파일 분류와 layoutSpec 생성
+- [x] Auto typesetting: works.layoutSpec 저장 및 등록·수정 시 1회 분석
+- [x] Auto typesetting: 논리행·시각행 구분과 원문 공백·줄바꿈 보존
+- [x] Auto typesetting: 프로파일별 measure/turnover/fitWidth/justify/stanza 규칙 적용
+- [x] Auto typesetting: WorkPage와 AdminEditor 미리보기 내어쓰기·자동 글자크기 적용
+- [x] Auto typesetting: 관리자 프로파일·내어쓰기·최대 폭·justify 오버라이드
+- [x] Auto typesetting: 데스크톱/태블릿/모바일 3분할 미리보기
+- [x] QA: 윤동주 서시 STANDARD 분류
+- [x] QA: 한용운 님의 침묵 도입부 LONG 분류
+- [x] QA: 이상 오감도 붙여쓴 행 예외 처리
+- [x] QA: 계단식 배치 SHAPED 분류 및 원문 배치 보존
+- [x] QA: 360px/768px/1280px 가로 스크롤 없음
+- [x] Final: 자동 조판 엔진 체크포인트 저장
+
+## Auto-typesetting engine continuation
+
+- [x] Add shared analyzePoem() profiles for STANDARD, LONG, PROSE, and SHAPED layouts
+- [x] Persist originalContent and layoutSpec on works create/update
+- [x] Backfill existing works with originalContent and layoutSpec
+- [x] Render stored layoutSpec on WorkPage with measure, turnover, fitWidth, alignment, and overflow rules
+- [x] Add AdminEditor layout override controls for profile, turnover, measure, and justify
+- [x] Add Desktop/Tablet/Mobile responsive preview switcher to AdminEditor
+- [x] Add unit coverage for representative Seo-si, Nim-ui Chimmuk, Ogamdo, stepped arrangement, and long-token cases
+- [x] Run TypeScript, Vitest, production build, and visual QA
+- [x] Save checkpoint and deliver the live version

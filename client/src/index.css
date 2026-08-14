@@ -86,28 +86,54 @@
 
 /* Book body text - small type, generous leading */
 .book-body-text {
-  font-size: 0.8rem;
+  --poem-measure: 30;
+  --poem-fit-width: 30;
+  --poem-turnover: 1.4;
+  --poem-explicit-indent: 0;
+  --poem-overflow-wrap: normal;
+  --poem-text-align: start;
+  container-type: inline-size;
+  width: min(100%, calc(var(--poem-measure) * 1em));
+  max-width: 100%;
+  margin-inline: auto;
+  font-size: clamp(0.68rem, calc(100cqw / max(var(--poem-fit-width), 18) / 1.55), var(--poem-max-font-size, 0.85rem));
   line-height: 2.4;
   letter-spacing: -0.005em;
   word-break: keep-all;
+  overflow-wrap: var(--poem-overflow-wrap);
   white-space: pre-wrap;
+  text-align: var(--poem-text-align);
   color: rgba(0, 0, 0, 0.85);
 }
 
 @media (min-width: 640px) {
   .book-body-text {
-    font-size: 0.85rem;
     line-height: 2.5;
   }
 }
 
-/* Individual line in book */
+/* Individual logical line: first visual row starts at its source indent,
+   while wrapped visual rows turn inward by the configured turnover amount. */
 .book-line {
   min-height: 2.4em;
   white-space: pre-wrap;
-  /* One logical row stays flush-left on its first visual line; wrapped lines hang inward. */
-  padding-inline-start: 1em;
-  text-indent: -1em;
+  padding-inline-start: calc((var(--poem-turnover) + var(--poem-explicit-indent)) * 1em);
+  text-indent: calc(var(--poem-turnover) * -1em);
+}
+
+.book-marker-line {
+  padding-inline-start: 0;
+  text-indent: 0;
+  text-align: center;
+}
+
+.poem-profile-shaped .book-line {
+  padding-inline-start: calc(var(--poem-explicit-indent) * 1em);
+  text-indent: 0;
+}
+
+.poem-profile-prose .book-line {
+  min-height: 0;
 }
 
 /* Stanza gap - slightly larger than one line */

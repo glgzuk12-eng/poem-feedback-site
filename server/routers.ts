@@ -93,6 +93,12 @@ export const appRouter = router({
         type: z.enum(["poem", "essay"]),
         content: z.string().min(1),
         sortOrder: z.number().optional(),
+        layoutOverrides: z.object({
+          profile: z.enum(["STANDARD", "LONG", "PROSE", "SHAPED"]).optional(),
+          turnover: z.number().min(0).max(3).optional(),
+          measure: z.number().min(12).max(40).optional(),
+          justify: z.boolean().optional(),
+        }).partial().optional(),
       }))
       .mutation(async ({ input }) => {
         const work = await createWork(input);
@@ -106,6 +112,12 @@ export const appRouter = router({
         type: z.enum(["poem", "essay"]).optional(),
         content: z.string().min(1).optional(),
         sortOrder: z.number().optional(),
+        layoutOverrides: z.object({
+          profile: z.enum(["STANDARD", "LONG", "PROSE", "SHAPED"]).optional(),
+          turnover: z.number().min(0).max(3).optional(),
+          measure: z.number().min(12).max(40).optional(),
+          justify: z.boolean().optional(),
+        }).partial().optional(),
       }))
       .mutation(async ({ input }) => {
         await updateWork(input.id, input);

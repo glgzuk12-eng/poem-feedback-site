@@ -1,4 +1,5 @@
-import { int, mysqlEnum, mysqlTable, text, timestamp, varchar } from "drizzle-orm/mysql-core";
+import { int, json, mysqlEnum, mysqlTable, text, timestamp, varchar } from "drizzle-orm/mysql-core";
+import type { PoemLayoutSpec } from "../shared/poemLayout";
 
 /**
  * Core user table backing auth flow.
@@ -42,6 +43,10 @@ export const works = mysqlTable("works", {
   slug: varchar("slug", { length: 255 }).notNull(),
   type: mysqlEnum("type", ["poem", "essay"]).notNull().default("poem"),
   content: text("content").notNull(),
+  /** Original source text; content remains the backward-compatible render source. */
+  originalContent: text("originalContent"),
+  /** Cached result of analyzePoem(), generated on create/update. */
+  layoutSpec: json("layoutSpec").$type<PoemLayoutSpec>(),
   sortOrder: int("sortOrder").notNull().default(0),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 });

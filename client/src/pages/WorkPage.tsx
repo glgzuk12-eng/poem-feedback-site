@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { formatPoemLines, getDisplayIndentStyle, type FormattedPoemLine } from "@/lib/poemFormatting";
 import { parseInlineFormatting } from "@/components/PoemInlineText";
+import { analyzePoem, type PoemLayoutSpec } from "../../../shared/poemLayout";
 
 /**
  * Splits content by {{PAGE_BREAK}} markers into separate page blocks.
@@ -28,6 +29,7 @@ function BookPage({
   isFirstPage,
   title,
   type,
+  layoutSpec,
 }: {
   content: string;
   pageNumber: number;
@@ -36,8 +38,21 @@ function BookPage({
   isFirstPage: boolean;
   title?: string;
   type: "poem" | "essay";
+  layoutSpec?: PoemLayoutSpec;
 }) {
   const lines = type === "poem" ? formatPoemLines(content) : content.split("\n");
+  const typesetStyle = layoutSpec
+    ? ({
+        "--poem-measure": String(layoutSpec.measure),
+        "--poem-fit-width": String(layoutSpec.fitWidth),
+        "--poem-turnover": String(layoutSpec.turnover),
+        "--poem-overflow-wrap": layoutSpec.overflowWrapAnywhere ? "anywhere" : "normal",
+        "--poem-text-align": layoutSpec.justify ? "justify" : "start",
+      } as React.CSSProperties)
+    : undefined;
+  const bodyClassName = layoutSpec
+    ? `book-body-text poem-profile-${layoutSpec.profile.toLowerCase()}`
+    : "book-body-text";
 
   return (
     <div className="book-page relative bg-white border border-black/[0.06] shadow-[0_1px_3px_rgba(0,0,0,0.04)] mb-4 sm:mb-6">
@@ -75,7 +90,7 @@ function BookPage({
         )}
 
         {/* Body text */}
-        <div className="book-body-text">
+        <div className={bodyClassName} style={typesetStyle}>
           {lines.map((entry, i) => {
             if (type === "poem") {
               const line = entry as FormattedPoemLine;
@@ -83,7 +98,7 @@ function BookPage({
               return (
                 <div
                   key={i}
-                  className="book-line"
+                  className={`book-line ${line.kind === "marker" ? "book-marker-line" : ""}`}
                   style={line.kind === "line" ? getDisplayIndentStyle(line) : undefined}
                 >
                   {parseInlineFormatting(line.text)}
@@ -195,6 +210,9 @@ export default function WorkPage() {
   }
 
   const { work, author } = data;
+  const layoutSpec = work.type === "poem"
+    ? (work.layoutSpec ?? analyzePoem(work.originalContent ?? work.content))
+    : undefined;
 
   return (
     <div className="min-h-screen bg-[#f5f4f0]">
@@ -225,6 +243,7 @@ export default function WorkPage() {
             isFirstPage={index === 0}
             title={index === 0 ? work.title : undefined}
             type={work.type as "poem" | "essay"}
+            layoutSpec={layoutSpec}
           />
         ))}
 
