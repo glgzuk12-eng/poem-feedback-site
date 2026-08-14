@@ -355,3 +355,12 @@ Current rule clarification: previous entries describing automatic indentation by
 - [x] Verify representative works at desktop, tablet, and mobile widths without horizontal scrolling
 - [x] Run TypeScript, Vitest, production build, and visual regression checks
 - [x] Save checkpoint and deliver the updated live version
+
+## Page-specific typesetting refinement
+
+- [x] Measure representative PDF page types: poem title page, dense poem page, sparse poem page, prose/start-note page, and table-of-contents page
+- [x] Define page-level typography tokens for font size, text-block width, top offset, line-height, and stanza spacing
+- [x] Extend WorkPage layout mapping without breaking stored layoutSpec, original whitespace, or responsive no-scroll behavior
+- [x] Verify page-specific typography at desktop, tablet, and mobile widths against the reference PDF
+- [x] Run TypeScript, Vitest, production build, and visual regression checks
+- [x] Save checkpoint and deliver the refined live version

@@ -112,16 +112,16 @@
   position: relative;
   z-index: 1;
   min-height: 100%;
-  padding: clamp(3.6rem, 8vw, 5.5rem) clamp(2.75rem, 13vw, 7rem) clamp(5.25rem, 13vw, 8rem);
+  padding: var(--book-top-padding, clamp(3.6rem, 8vw, 5.5rem)) clamp(2.75rem, 13vw, 7rem) clamp(5.25rem, 13vw, 8rem);
 }
 
 .book-reading-column {
-  width: min(100%, 56%);
-  margin-inline-start: 8%;
+  width: min(100%, var(--book-column-width, 56%));
+  margin-inline-start: var(--book-column-offset, 8%);
 }
 
 .book-title-block {
-  margin-bottom: clamp(1.9rem, 4.5vw, 3.25rem);
+  margin-bottom: var(--book-title-gap, clamp(1.9rem, 4.5vw, 3.25rem));
 }
 
 .book-title {
@@ -143,12 +143,12 @@
   --poem-overflow-wrap: normal;
   --poem-text-align: start;
   container-type: inline-size;
-  width: min(100%, calc(var(--poem-measure) * 0.72em));
+  width: min(100%, var(--book-body-width, calc(var(--poem-measure) * 0.84em)));
   max-width: 100%;
   margin-inline: 0;
   font-family: Georgia, "Times New Roman", "Noto Serif KR", serif;
-  font-size: clamp(0.66rem, calc(100cqw / max(var(--poem-fit-width), 18) / 1.7), var(--poem-max-font-size, 0.78rem));
-  line-height: 2.18;
+  font-size: var(--book-page-font-size, clamp(0.66rem, calc(100cqw / max(var(--poem-fit-width), 18) / 1.7), var(--poem-max-font-size, 0.78rem)));
+  line-height: var(--book-page-line-height, 2.18);
   letter-spacing: -0.012em;
   word-break: keep-all;
   overflow-wrap: var(--poem-overflow-wrap);
@@ -158,9 +158,9 @@
 }
 
 .essay-book-body {
-  width: min(100%, 100%);
-  font-size: clamp(0.68rem, 1.05vw, 0.82rem);
-  line-height: 2.05;
+  width: min(100%, var(--book-body-width, 100%));
+  font-size: var(--book-page-font-size, clamp(0.68rem, 1.05vw, 0.82rem));
+  line-height: var(--book-page-line-height, 2.05);
 }
 
 .essay-book-body .essay-line {
@@ -199,7 +199,7 @@
 
 /* Stanza gap: one extra line of breathing room, not a card-like divider. */
 .stanza-gap {
-  height: 1.35em;
+  height: var(--book-stanza-gap, 1.35em);
 }
 
 .book-side-marks {
@@ -231,13 +231,13 @@
   }
 
   .book-body-text {
-    width: 100%;
+    width: min(100%, var(--book-body-width, 100%));
     font-size: clamp(0.64rem, 2.7vw, 0.75rem);
-    line-height: 2.08;
+    line-height: var(--book-page-line-height, 2.08);
   }
 
   .essay-book-body {
-    width: 100%;
+    width: min(100%, var(--book-body-width, 100%));
   }
 
   .book-title-block {

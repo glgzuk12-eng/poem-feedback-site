@@ -17,3 +17,21 @@ Representative poem pages confirm that the live site should move closer to a tru
 Line spacing is calm and even, with each logical line clearly separated but not theatrically loose. Stanza gaps are larger than a normal line break, usually around one additional line of breathing room. The outer page number is tiny and sits near the lower outer edge. There is no heavy border, card chrome, or strong shadow; instead the page relies on proportion, thin corner marks, and quiet margins to feel book-like.
 
 For the website, the key implications are a taller page frame, smaller title scale, a narrower poem measure, lighter decoration, lower-contrast page furniture, and a text block anchored higher with substantial bottom breathing room.
+
+Pages 2-6 visual findings (page-type calibration set):
+
+The front-matter title page uses a much looser composition than poem pages. Display text is set in a brighter green accent and occupies a smaller vertical band, while contributor names are grouped lower on the page in a compact block. This indicates that cover-like and section-opening pages should not share the same body tokens as poem reading pages.
+
+The opening prose pages confirm a wider text block than poem pages. The prose measure appears roughly one-third wider, with steady first-line paragraph indentation, slightly denser leading than poem pages, and a text block that begins near the upper-middle rather than very high. The final page of the opening note introduces a deliberate large empty lower half, showing that sparse pages should preserve vertical breathing room instead of stretching text to fill the frame.
+
+For calibration, the working page-type list should be: poem title/first page, dense continuing poem page, sparse continuing poem page, prose or start-note page, and front-matter/title-like page. Each needs its own text-block width, top offset, and maximum font-size token.
+
+Page-specific token QA notes:
+
+The updated WorkPage now classifies each physical PAGE_BREAK block rather than applying one global font/measure. First pages use a slightly more open title composition; sparse poem pages receive a larger top offset and preserved white space; dense poem pages use a slightly wider text column with a marginally smaller font and tighter leading; standard poem pages sit between those values; essay pages use the widest column and paragraph indentation.
+
+At 1280px and 390px, the representative Spiritus page retains the narrow printed column, calmer small type, and no horizontal overflow. The page frame continues to fill the reading width while the text block remains intentionally smaller, matching the reference book's strong white-space ratio.
+
+Tablet QA:
+
+At 768px, the page-specific rules keep the text column proportionally narrow while allowing longer logical lines to flow naturally. The title remains modest, the top offset is controlled, and the page frame has no horizontal overflow. Compared with the original global treatment, the body is less oversized and the whitespace ratio is closer to the reference pages.

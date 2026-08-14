@@ -16,6 +16,100 @@ function splitIntoPages(content: string): string[] {
   return content.split("{{PAGE_BREAK}}").map((page) => page.replace(/^\n+|\n+$/g, ""));
 }
 
+type BookPageTypography = {
+  kind: "poem-title" | "poem-dense" | "poem-standard" | "poem-sparse" | "prose";
+  columnWidth: string;
+  columnOffset: string;
+  topPadding: string;
+  bodyWidth: string;
+  fontSize: string;
+  lineHeight: string;
+  titleGap: string;
+  stanzaGap: string;
+};
+
+function getBookPageTypography(
+  content: string,
+  type: "poem" | "essay",
+  isFirstPage: boolean,
+): BookPageTypography {
+  const sourceLines = content.replace(/\r\n?/g, "\n").split("\n");
+  const nonBlankLines = sourceLines.filter((line) => line.trim() !== "");
+  const characterCount = Array.from(nonBlankLines.join("")).length;
+  const longestLine = Math.max(
+    0,
+    ...nonBlankLines.map((line) => Array.from(line.trim()).length),
+  );
+
+  if (type === "essay") {
+    return {
+      kind: "prose",
+      columnWidth: "72%",
+      columnOffset: "3%",
+      topPadding: "clamp(4.3rem, 9vw, 6rem)",
+      bodyWidth: "100%",
+      fontSize: "clamp(0.7rem, 1.08vw, 0.82rem)",
+      lineHeight: "2.05",
+      titleGap: "clamp(1.4rem, 3.2vw, 2.5rem)",
+      stanzaGap: "1.15em",
+    };
+  }
+
+  if (isFirstPage) {
+    return {
+      kind: "poem-title",
+      columnWidth: "62%",
+      columnOffset: "7%",
+      topPadding: "clamp(3.9rem, 8.5vw, 5.75rem)",
+      bodyWidth: "calc(var(--poem-measure) * 0.88em)",
+      fontSize: "clamp(0.68rem, 1vw, 0.8rem)",
+      lineHeight: "2.16",
+      titleGap: "clamp(1.8rem, 4vw, 3rem)",
+      stanzaGap: "1.35em",
+    };
+  }
+
+  if (nonBlankLines.length <= 12 || characterCount <= 150) {
+    return {
+      kind: "poem-sparse",
+      columnWidth: "62%",
+      columnOffset: "7%",
+      topPadding: "clamp(5.5rem, 15vw, 9.5rem)",
+      bodyWidth: "calc(var(--poem-measure) * 0.86em)",
+      fontSize: "clamp(0.68rem, 1vw, 0.8rem)",
+      lineHeight: "2.16",
+      titleGap: "0px",
+      stanzaGap: "1.45em",
+    };
+  }
+
+  if (nonBlankLines.length >= 18 || characterCount >= 420 || longestLine >= 34) {
+    return {
+      kind: "poem-dense",
+      columnWidth: "66%",
+      columnOffset: "5%",
+      topPadding: "clamp(3.8rem, 8vw, 5.7rem)",
+      bodyWidth: "calc(var(--poem-measure) * 0.9em)",
+      fontSize: "clamp(0.66rem, 0.96vw, 0.77rem)",
+      lineHeight: "2.08",
+      titleGap: "0px",
+      stanzaGap: "1.25em",
+    };
+  }
+
+  return {
+    kind: "poem-standard",
+    columnWidth: "64%",
+    columnOffset: "6%",
+    topPadding: "clamp(4.5rem, 10vw, 6.75rem)",
+    bodyWidth: "calc(var(--poem-measure) * 0.88em)",
+    fontSize: "clamp(0.67rem, 0.98vw, 0.79rem)",
+    lineHeight: "2.12",
+    titleGap: "0px",
+    stanzaGap: "1.35em",
+  };
+}
+
 /**
  * BookPage component - renders a single page in the PDF book style.
  * Even pages: decorative lines on left, page number bottom-left.
@@ -41,19 +135,28 @@ function BookPage({
   layoutSpec?: PoemLayoutSpec;
 }) {
   const lines = type === "poem" ? formatPoemLines(content) : content.split("\n");
+  const pageTypography = getBookPageTypography(content, type, isFirstPage);
   const typesetStyle = ({
     "--poem-measure": String(layoutSpec?.measure ?? 24),
     "--poem-fit-width": String(layoutSpec?.fitWidth ?? 24),
     "--poem-turnover": String(layoutSpec?.turnover ?? 1),
     "--poem-overflow-wrap": layoutSpec?.overflowWrapAnywhere ? "anywhere" : "normal",
     "--poem-text-align": layoutSpec?.justify ? "justify" : "start",
+    "--book-column-width": pageTypography.columnWidth,
+    "--book-column-offset": pageTypography.columnOffset,
+    "--book-top-padding": pageTypography.topPadding,
+    "--book-body-width": pageTypography.bodyWidth,
+    "--book-page-font-size": pageTypography.fontSize,
+    "--book-page-line-height": pageTypography.lineHeight,
+    "--book-title-gap": pageTypography.titleGap,
+    "--book-stanza-gap": pageTypography.stanzaGap,
   } as React.CSSProperties);
   const bodyClassName = layoutSpec
     ? `book-body-text poem-profile-${layoutSpec.profile.toLowerCase()}`
     : "book-body-text essay-book-body";
 
   return (
-    <div className="book-page mb-4 sm:mb-8">
+    <div className={`book-page book-page-${pageTypography.kind} mb-4 sm:mb-8`}>
       {/* Corner registration marks are drawn by .book-page::before/after. */}
 
       {/* Page content area */}
