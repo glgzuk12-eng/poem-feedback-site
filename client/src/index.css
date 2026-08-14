@@ -105,6 +105,9 @@
 .book-line {
   min-height: 2.4em;
   white-space: pre-wrap;
+  /* One logical row stays flush-left on its first visual line; wrapped lines hang inward. */
+  padding-inline-start: 1em;
+  text-indent: -1em;
 }
 
 /* Stanza gap - slightly larger than one line */

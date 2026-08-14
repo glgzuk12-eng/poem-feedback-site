@@ -84,5 +84,5 @@ export function isStanzaMarker(line: string) {
 }
 
 export function getPoemIndentHint() {
-  return "Enter 줄바꿈과 원문의 공백을 작품에 그대로 표시합니다. 자동 들여쓰기는 적용하지 않습니다.";
+  return "Enter 줄바꿈과 원문의 공백을 그대로 표시합니다. 화면에서 감싸지는 긴 행의 이어지는 줄에는 자동 내어쓰기를 적용합니다.";
 }

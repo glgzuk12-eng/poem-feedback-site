@@ -311,3 +311,11 @@ Current rule clarification: previous entries describing automatic indentation by
 - [x] QA: 관리자 입력→미리보기→저장→작품 상세 공백 유지 검증
 - [x] QA: 데스크톱·모바일 원문 느낌 검증
 - [x] Final: 공백 보존 수정 체크포인트 저장
+
+- [x] Fix: 미리보기에서 화면상 두 줄 이상이 되는 논리 행에 자동 내어쓰기 적용
+- [x] Fix: 첫 시각 줄은 기준선, 이어지는 시각 줄만 내어쓰기되도록 WorkPage·AdminEditor 동기화
+- [x] Fix: 원문 공백·줄바꿈·빈 줄·＜/< marker 보존 유지
+- [x] QA: 짧은 한 줄 문장은 내어쓰기 없음
+- [x] QA: 긴 문장은 화면 줄바꿈 시 이어지는 줄만 내어쓰기
+- [x] QA: 데스크톱·모바일에서 내어쓰기 확인
+- [x] Final: 자동 내어쓰기 체크포인트 저장
