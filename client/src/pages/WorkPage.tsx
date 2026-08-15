@@ -44,8 +44,8 @@ function getBookPageTypography(
   if (type === "essay") {
     return {
       kind: "prose",
-      columnWidth: "72%",
-      columnOffset: "3%",
+      columnWidth: "78%",
+      columnOffset: "2%",
       topPadding: "clamp(4.3rem, 9vw, 6rem)",
       bodyWidth: "100%",
       fontSize: "clamp(0.7rem, 1.08vw, 0.82rem)",
@@ -58,10 +58,10 @@ function getBookPageTypography(
   if (isFirstPage) {
     return {
       kind: "poem-title",
-      columnWidth: "62%",
-      columnOffset: "7%",
+      columnWidth: "72%",
+      columnOffset: "6%",
       topPadding: "clamp(3.9rem, 8.5vw, 5.75rem)",
-      bodyWidth: "calc(var(--poem-measure) * 0.88em)",
+      bodyWidth: "calc(var(--poem-measure) * 1.02em)",
       fontSize: "clamp(0.68rem, 1vw, 0.8rem)",
       lineHeight: "2.16",
       titleGap: "clamp(1.8rem, 4vw, 3rem)",
@@ -72,10 +72,10 @@ function getBookPageTypography(
   if (nonBlankLines.length <= 12 || characterCount <= 150) {
     return {
       kind: "poem-sparse",
-      columnWidth: "62%",
-      columnOffset: "7%",
+      columnWidth: "70%",
+      columnOffset: "6%",
       topPadding: "clamp(5.5rem, 15vw, 9.5rem)",
-      bodyWidth: "calc(var(--poem-measure) * 0.86em)",
+      bodyWidth: "calc(var(--poem-measure) * 1em)",
       fontSize: "clamp(0.68rem, 1vw, 0.8rem)",
       lineHeight: "2.16",
       titleGap: "0px",
@@ -86,10 +86,10 @@ function getBookPageTypography(
   if (nonBlankLines.length >= 18 || characterCount >= 420 || longestLine >= 34) {
     return {
       kind: "poem-dense",
-      columnWidth: "66%",
-      columnOffset: "5%",
+      columnWidth: "76%",
+      columnOffset: "4%",
       topPadding: "clamp(3.8rem, 8vw, 5.7rem)",
-      bodyWidth: "calc(var(--poem-measure) * 0.9em)",
+      bodyWidth: "calc(var(--poem-measure) * 1.08em)",
       fontSize: "clamp(0.66rem, 0.96vw, 0.77rem)",
       lineHeight: "2.08",
       titleGap: "0px",
@@ -99,10 +99,10 @@ function getBookPageTypography(
 
   return {
     kind: "poem-standard",
-    columnWidth: "64%",
-    columnOffset: "6%",
+    columnWidth: "72%",
+    columnOffset: "5%",
     topPadding: "clamp(4.5rem, 10vw, 6.75rem)",
-    bodyWidth: "calc(var(--poem-measure) * 0.88em)",
+    bodyWidth: "calc(var(--poem-measure) * 1.04em)",
     fontSize: "clamp(0.67rem, 0.98vw, 0.79rem)",
     lineHeight: "2.12",
     titleGap: "0px",

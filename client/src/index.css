@@ -226,8 +226,8 @@
   }
 
   .book-reading-column {
-    width: 62%;
-    margin-inline-start: 7%;
+    width: min(100%, var(--book-column-width, 70%));
+    margin-inline-start: var(--book-column-offset, 6%);
   }
 
   .book-body-text {

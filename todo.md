@@ -364,3 +364,10 @@ Current rule clarification: previous entries describing automatic indentation by
 - [x] Verify page-specific typography at desktop, tablet, and mobile widths against the reference PDF
 - [x] Run TypeScript, Vitest, production build, and visual regression checks
 - [x] Save checkpoint and deliver the refined live version
+
+## Preview text width refinement
+
+- [x] Inspect the current preview text column at desktop, tablet, and mobile widths
+- [x] Widen the page-specific poem and prose text columns while preserving book-like margins and no horizontal scrolling
+- [x] Run responsive visual checks and regression tests
+- [x] Save checkpoint and deliver the refined live version
