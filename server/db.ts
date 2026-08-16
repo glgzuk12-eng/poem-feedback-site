@@ -123,6 +123,17 @@ export async function getWorksByAuthorId(authorId: number) {
   return db.select().from(works).where(eq(works.authorId, authorId)).orderBy(asc(works.sortOrder));
 }
 
+/** Public author pages use upload order; the admin workspace keeps manual sortOrder. */
+export async function getWorksByAuthorIdUploadOrder(authorId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  return db
+    .select()
+    .from(works)
+    .where(eq(works.authorId, authorId))
+    .orderBy(desc(works.createdAt), desc(works.id));
+}
+
 export async function getWorkBySlug(slug: string) {
   const db = await getDb();
   if (!db) return undefined;

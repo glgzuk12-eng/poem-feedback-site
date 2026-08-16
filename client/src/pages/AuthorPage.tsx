@@ -2,6 +2,14 @@ import { trpc } from "@/lib/trpc";
 import { Link, useParams } from "wouter";
 import { ArrowLeft } from "lucide-react";
 
+function formatDate(value: Date | string | number) {
+  return new Date(value).toLocaleDateString("ko-KR", {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+  });
+}
+
 export default function AuthorPage() {
   const { slug } = useParams<{ slug: string }>();
   const { data, isLoading } = trpc.authors.getBySlug.useQuery({ slug: slug || "" });
@@ -88,12 +96,20 @@ export default function AuthorPage() {
                         </span>
                       )}
                     </h3>
-                    <span className="text-xs text-black/30 font-light mt-0.5 block">
-                      {work.type === "essay" ? "산문" : "시"}
-                    </span>
+                    <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 mt-0.5">
+                      <span className="text-xs text-black/30 font-light">
+                        {work.type === "essay" ? "산문" : "시"}
+                      </span>
+                      <time
+                        dateTime={new Date(work.createdAt).toISOString()}
+                        className="text-[10px] text-black/35 font-light tabular-nums"
+                      >
+                        등록 {formatDate(work.createdAt)}
+                      </time>
+                    </div>
                   </div>
                 </div>
-                <div className="w-1.5 h-1.5 bg-[oklch(0.55_0.22_25)] opacity-0 group-hover:opacity-100 transition-opacity" />
+                <div className="w-1.5 h-1.5 bg-[oklch(0.55_0.22_25)] opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
               </Link>
             ))}
           </div>

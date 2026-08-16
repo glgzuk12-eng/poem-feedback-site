@@ -35,6 +35,9 @@ describe("authors", () => {
     expect(author?.name).toBe("김승욱");
     expect(author?.works).toBeInstanceOf(Array);
     expect(author?.works.length).toBeGreaterThan(0);
+    expect(author?.works[0]).toHaveProperty("createdAt");
+    const timestamps = (author?.works ?? []).map((work) => new Date(work.createdAt).getTime());
+    expect(timestamps).toEqual([...timestamps].sort((left, right) => right - left));
   });
 
   it("returns null for non-existent author", async () => {

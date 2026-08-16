@@ -10,6 +10,7 @@ import {
   getAllAuthors,
   getAuthorBySlug,
   getWorksByAuthorId,
+  getWorksByAuthorIdUploadOrder,
   getWorkBySlug,
   getWorkById,
   getCommentsByWorkId,
@@ -185,7 +186,7 @@ export const appRouter = router({
       .query(async ({ input }) => {
         const author = await getAuthorBySlug(input.slug);
         if (!author) return null;
-        const authorWorks = await getWorksByAuthorId(author.id);
+        const authorWorks = await getWorksByAuthorIdUploadOrder(author.id);
         // Get comment counts for all works
         const workIds = authorWorks.map(w => w.id);
         const commentCounts = await getCommentCountsByWorkIds(workIds);

@@ -371,3 +371,10 @@ Current rule clarification: previous entries describing automatic indentation by
 - [x] Widen the page-specific poem and prose text columns while preserving book-like margins and no horizontal scrolling
 - [x] Run responsive visual checks and regression tests
 - [x] Save checkpoint and deliver the refined live version
+
+## Works list order and dates
+
+- [x] Inspect author and recent works list queries and rendering
+- [x] Sort works by createdAt in upload order and display each work's registration date
+- [x] Verify desktop/mobile list layouts and run regression tests
+- [x] Save checkpoint and deliver the updated live version
