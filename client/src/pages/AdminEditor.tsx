@@ -350,6 +350,17 @@ export default function AdminEditor() {
     void fetchWorkContent(work.id).then(() => setSaveStatus("저장됨"));
   }
 
+  useEffect(() => {
+    if (!isAdmin || !allWorks || editingId !== null) return;
+    const workIdParam = new URLSearchParams(window.location.search).get("workId");
+    const workId = Number(workIdParam);
+    if (!Number.isInteger(workId) || workId <= 0) return;
+    const targetWork = allWorks.find((work) => work.id === workId);
+    if (!targetWork) return;
+    handleEdit(targetWork);
+    navigate("/admin/editor", { replace: true });
+  }, [allWorks, editingId, isAdmin, navigate]);
+
   function restoreDraft() {
     const draft = readDraft(draftKey);
     if (!draft) return;

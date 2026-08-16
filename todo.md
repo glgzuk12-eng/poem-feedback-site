@@ -378,3 +378,10 @@ Current rule clarification: previous entries describing automatic indentation by
 - [x] Sort works by createdAt in upload order and display each work's registration date
 - [x] Verify desktop/mobile list layouts and run regression tests
 - [x] Save checkpoint and deliver the updated live version
+
+## Direct admin edit from work detail
+
+- [x] Inspect admin status hook, WorkPage routing, and AdminEditor edit hydration
+- [x] Add an admin-only edit button to WorkPage and route to the selected work in AdminEditor
+- [x] Verify non-admin visibility, admin entry flow, responsive layout, and regression tests
+- [x] Save checkpoint and deliver the updated live version

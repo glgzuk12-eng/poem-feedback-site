@@ -1,12 +1,13 @@
 import { trpc } from "@/lib/trpc";
 import { Link, useParams } from "wouter";
-import { ArrowLeft, Send } from "lucide-react";
+import { ArrowLeft, Edit3, Send } from "lucide-react";
 import { useState, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { formatPoemLines, getDisplayIndentStyle, type FormattedPoemLine } from "@/lib/poemFormatting";
 import { parseInlineFormatting } from "@/components/PoemInlineText";
 import { analyzePoem, type PoemLayoutSpec } from "../../../shared/poemLayout";
+import { useAdmin } from "@/hooks/useAdmin";
 
 /**
  * Splits content by {{PAGE_BREAK}} markers into separate page blocks.
@@ -218,6 +219,7 @@ function BookPage({
 
 export default function WorkPage() {
   const { slug } = useParams<{ slug: string }>();
+  const { isAdmin } = useAdmin();
   const [nickname, setNickname] = useState("");
   const [commentText, setCommentText] = useState("");
 
@@ -303,6 +305,16 @@ export default function WorkPage() {
           </Link>
           <div className="w-px h-3 bg-black/10" />
           <span className="text-xs text-black/30 font-light">{work.type === "essay" ? "산문" : "시"}</span>
+          {isAdmin && (
+            <Link
+              href={`/admin/editor?workId=${work.id}`}
+              className="ml-auto inline-flex items-center gap-1.5 border border-black/15 px-2.5 py-1.5 text-[10px] text-black/55 hover:border-black/45 hover:text-black transition-colors"
+              aria-label={`${work.title} 작품 수정`}
+            >
+              <Edit3 size={11} />
+              수정
+            </Link>
+          )}
         </div>
       </header>
 
